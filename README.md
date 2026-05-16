@@ -1,20 +1,28 @@
 # PartiMorph
 
-2D binary particle shape analysis library. Computes four morphological metrics from a binary mask:
+PartiMorph analyzes a single 2D binary particle mask and returns geometric shape metrics.
 
-- **Wadell roundness** — corner curvature-based roundness
-- **ISO circularity** — perimeter-area ratio
-- **Riley sphericity** — inscribed/enclosing circle ratio
-- **Aspect ratio** — fitted ellipse major/minor axis ratio
+| Metric | Meaning |
+|---|---|
+| Wadell roundness | Corner curvature-based roundness |
+| Circularity | `4 * pi * area / perimeter^2` |
+| Sphericity | Inscribed circle radius divided by enclosing circle radius |
+| Aspect ratio | Fitted ellipse major axis divided by minor axis |
 
-All values are dimensionless ratios (0–1, except aspect ratio which is >= 1).
+Roundness, circularity, and sphericity are clipped to `0..1`. Aspect ratio is `>= 1`.
 
 ## Installation
 
-Python `3.12+`
+PartiMorph requires Python `3.12+`.
 
 ```bash
 pip install partimorph
+```
+
+For local development:
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ## Quick Start
@@ -24,6 +32,9 @@ import partimorph as pm
 
 mask = pm.utils.create_circle_mask((256, 256), (128, 128), 60)
 results = pm.analyze_mask(mask)
+
+if results is None:
+    raise ValueError("mask has no foreground pixels")
 
 print(results["roundness"]["val"])
 print(results["circularity"]["val"])
@@ -58,9 +69,9 @@ pm.analyze_mask(
 | `use_*` | Toggle individual metrics on/off |
 | `roundness_params` | Optional dict to override Wadell roundness parameters |
 | `eps` | Tolerance for geometric computations |
-| `target_dim` | Large masks are downscaled to this size for speed |
+| `target_dim` | Large masks are downscaled to this size for speed, then coordinates are rescaled |
 
-Returns an `AnalysisResult` dict. Keys are only present for enabled metrics (`use_*=True`).
+Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. Disabled metrics are omitted; enabled metrics are present and may be `None` when the geometry cannot be measured.
 
 ## Result Shape
 
@@ -87,13 +98,27 @@ Returns an `AnalysisResult` dict. Keys are only present for enabled metrics (`us
 ## Input Rules
 
 - `mask` must be a 2D `numpy.ndarray`
-- Allowed values: `bool` or `{0, 1}`
+- Allowed values are `bool` or numeric `{0, 1}`
+- Floating masks must not contain `NaN` or `inf`
 - Empty mask returns `None`
+- Shape and center arguments use image order: `(height, width)` and `(y, x)`
 
 ## Utilities
 
-- `pm.utils.create_particle_mask(...)` — synthetic mask generator with Fourier roughness control
-- `pm.utils.plot_analysis_results(mask, results)` — overlay visualization of all computed metrics
+Mask constructors:
+
+- `pm.utils.create_circle_mask(...)`
+- `pm.utils.create_ellipse_mask(...)`
+- `pm.utils.create_rectangle_mask(...)`
+- `pm.utils.create_square_mask(...)`
+- `pm.utils.create_triangle_mask(...)`
+- `pm.utils.create_pentagon_mask(...)`
+- `pm.utils.create_star_mask(...)`
+- `pm.utils.create_particle_mask(...)`
+
+Visualization:
+
+- `pm.utils.plot_analysis_results(mask, results)`
 
 ## License
 

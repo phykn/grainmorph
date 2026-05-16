@@ -93,9 +93,8 @@ def max_line_deviation(x: np.ndarray, y: np.ndarray) -> tuple[float, int]:
 
         return (float(np.sqrt(dist_sq[idx])), idx)
 
-    else:
-        c = y1 * x0 - y0 * x1
-        dist_num = np.abs(dy * x + dx * y + c)
-        idx = int(np.argmax(dist_num))
+    c = y1 * x0 - y0 * x1
+    dist_num = np.abs(dy * x + dx * y + c)
+    idx = int(np.argmax(dist_num))
 
-        return (float(dist_num[idx] / np.sqrt(dist_end_sq)), idx)
+    return (float(dist_num[idx] / np.sqrt(dist_end_sq)), idx)

@@ -25,6 +25,16 @@ def _ellipse_payload(
     }
 
 
+def _point_from_axes(
+    width_coord: float,
+    height_coord: float,
+    width_vector: np.ndarray,
+    height_vector: np.ndarray,
+) -> list[float]:
+    point = width_coord * width_vector + height_coord * height_vector
+    return [float(point[0]), float(point[1])]
+
+
 def _oriented_bbox_from_angle(
     points: Points, angle: float
 ) -> tuple[float, float, float, float, list[list[float]]]:
@@ -46,31 +56,18 @@ def _oriented_bbox_from_angle(
     mid_width = (max_width + min_width) / 2.0
     mid_height = (max_height + min_height) / 2.0
 
-    center_x = mid_width * width_vector[0] + mid_height * height_vector[0]
-    center_y = mid_width * width_vector[1] + mid_height * height_vector[1]
+    center = mid_width * width_vector + mid_height * height_vector
 
     bbox = [
-        [
-            float(min_width * width_vector[0] + min_height * height_vector[0]),
-            float(min_width * width_vector[1] + min_height * height_vector[1]),
-        ],
-        [
-            float(max_width * width_vector[0] + min_height * height_vector[0]),
-            float(max_width * width_vector[1] + min_height * height_vector[1]),
-        ],
-        [
-            float(max_width * width_vector[0] + max_height * height_vector[0]),
-            float(max_width * width_vector[1] + max_height * height_vector[1]),
-        ],
-        [
-            float(min_width * width_vector[0] + max_height * height_vector[0]),
-            float(min_width * width_vector[1] + max_height * height_vector[1]),
-        ],
+        _point_from_axes(min_width, min_height, width_vector, height_vector),
+        _point_from_axes(max_width, min_height, width_vector, height_vector),
+        _point_from_axes(max_width, max_height, width_vector, height_vector),
+        _point_from_axes(min_width, max_height, width_vector, height_vector),
     ]
 
     return (
-        float(center_x),
-        float(center_y),
+        float(center[0]),
+        float(center[1]),
         float(tight_width),
         float(tight_height),
         bbox,
