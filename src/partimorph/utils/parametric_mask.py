@@ -46,6 +46,53 @@ def roughness_signal(
     return signal / max_abs if max_abs > 1e-12 else signal
 
 
+def _calibrate_roundness_amplitude(
+    *,
+    radius: float,
+    sphericity: float,
+    roundness: float,
+    frequencies: np.ndarray,
+    phases: np.ndarray,
+    decay: float,
+    max_iter: int,
+    amp_max: float,
+    metric_tol: float,
+) -> tuple[float, float]:
+    thetas = np.linspace(0.0, 2.0 * np.pi, 128, endpoint=False)
+    base_radii = ellipse_radius(
+        radius, radius * sphericity, np.cos(thetas), np.sin(thetas)
+    )
+    roughness_radii = roughness_signal(thetas, frequencies, phases, decay) * radius
+    scale = min(1.0, 128.0 / radius)
+    size = int(np.ceil((radius * scale * (1.0 + amp_max) + 2) * 2))
+    shape = (size, size)
+    center = size / 2.0
+
+    def measure(amplitude: float) -> float:
+        radii = (base_radii + amplitude * roughness_radii) * scale
+        vertices = polar_vertices((center, center), np.maximum(radii, 0.5), thetas)
+        result = compute_roundness(create_poly_mask(shape, vertices))
+        return float(result["val"]) if result else 0.0
+
+    achieved = measure(0.0)
+    amplitude = 0.0
+    if achieved > roundness + metric_tol:
+        low, high = 0.0, float(amp_max)
+        for _ in range(max_iter):
+            mid = (low + high) / 2
+            measured = measure(mid)
+            if abs(measured - roundness) < abs(achieved - roundness):
+                achieved, amplitude = measured, mid
+            if abs(measured - roundness) <= metric_tol:
+                break
+            if measured > roundness:
+                low = mid
+            else:
+                high = mid
+
+    return achieved, amplitude
+
+
 def create_particle_mask(
     shape: tuple[int, int],
     center: tuple[float, float],
@@ -122,48 +169,27 @@ def create_particle_mask(
         )
         return (mask, info) if return_info else mask
 
-    thetas_sim = np.linspace(0.0, 2.0 * np.pi, 128, endpoint=False)
-    base_sim = ellipse_radius(
-        radius, radius * sphericity, np.cos(thetas_sim), np.sin(thetas_sim)
+    achieved, amplitude = _calibrate_roundness_amplitude(
+        radius=radius,
+        sphericity=sphericity,
+        roundness=roundness,
+        frequencies=frequencies_arr,
+        phases=phases,
+        decay=decay,
+        max_iter=max_iter,
+        amp_max=amp_max,
+        metric_tol=metric_tol,
     )
-    noise_sim = roughness_signal(thetas_sim, frequencies_arr, phases, decay) * radius
-    scale = min(1.0, 128.0 / radius)
-
-    size_sim = int(np.ceil((radius * scale * (1.0 + amp_max) + 2) * 2))
-    form_sim = (size_sim, size_sim)
-    ct_sim = size_sim / 2.0
-
-    def measure(amp_val: float) -> float:
-        rs = (base_sim + amp_val * noise_sim) * scale
-        vs = polar_vertices((ct_sim, ct_sim), np.maximum(rs, 0.5), thetas_sim)
-        res = compute_roundness(create_poly_mask(form_sim, vs))
-        return float(res["val"]) if res else 0.0
-
-    val = measure(0.0)
-    amp = 0.0
-    if val > roundness + metric_tol:
-        low, high = 0.0, float(amp_max)
-        for _ in range(max_iter):
-            mid = (low + high) / 2
-            val_mid = measure(mid)
-            if abs(val_mid - roundness) < abs(val - roundness):
-                val, amp = val_mid, mid
-            if abs(val_mid - roundness) <= metric_tol:
-                break
-            if val_mid > roundness:
-                low = mid
-            else:
-                high = mid
 
     thetas = np.linspace(0.0, 2.0 * np.pi, num_angles, endpoint=False)
-    rs_base = ellipse_radius(
+    base_radii = ellipse_radius(
         radius, radius * sphericity, np.cos(thetas), np.sin(thetas)
     )
-    rs_noise = roughness_signal(thetas, frequencies_arr, phases, decay) * radius
-    rs_final = np.maximum(rs_base + amp * rs_noise, 0.5)
+    roughness_radii = roughness_signal(thetas, frequencies_arr, phases, decay) * radius
+    radii = np.maximum(base_radii + amplitude * roughness_radii, 0.5)
 
-    vs = polar_vertices((cy, cx), rs_final, thetas)
-    mask = create_poly_mask(shape, vs).astype(bool)
+    vertices = polar_vertices((cy, cx), radii, thetas)
+    mask = create_poly_mask(shape, vertices).astype(bool)
 
     if not return_info:
         return mask
@@ -171,9 +197,9 @@ def create_particle_mask(
     info = _build_info(
         sphericity=sphericity,
         roundness=roundness,
-        achieved=val,
+        achieved=achieved,
         report_tol=report_tol,
-        amplitude=amp,
+        amplitude=amplitude,
         frequencies=frequencies_arr,
         phases=phases,
     )
