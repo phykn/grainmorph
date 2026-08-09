@@ -1,11 +1,10 @@
 import numpy as np
-import skimage.measure
+
 from .fitting import (
     find_enclosing_circle,
     find_inscribed_circle,
     fit_ellipse,
 )
-from .wadell import compute_roundness as compute_roundness_wadell
 from .mask_ops import crop_mask
 from .schema import (
     AspectRatioResult,
@@ -24,6 +23,8 @@ def compute_roundness(
     alpha_ratio: float = 0.05,
     beta_ratio: float = 0.001,
 ) -> RoundnessResult | None:
+    from .wadell import compute_roundness as compute_roundness_wadell
+
     value = compute_roundness_wadell(
         mask,
         max_dev_thresh=max_dev_thresh,
@@ -41,12 +42,14 @@ def compute_roundness(
 
 
 def compute_circularity(mask: Mask, *, eps: float = 0.001) -> CircularityResult | None:
+    from skimage.measure import perimeter_crofton
+
     cropped_mask, _, _ = crop_mask(mask, pad=1)
 
     if cropped_mask.size == 0:
         return None
 
-    perimeter = skimage.measure.perimeter_crofton(cropped_mask, 4)
+    perimeter = perimeter_crofton(cropped_mask, 4)
 
     if perimeter < eps:
         return None

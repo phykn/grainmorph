@@ -69,7 +69,7 @@ pm.analyze_mask(
 | `use_*` | Toggle individual metrics on/off |
 | `roundness_params` | Optional dict to override Wadell roundness parameters |
 | `eps` | Tolerance for geometric computations |
-| `target_dim` | Large masks are downscaled to this size for speed, then coordinates are rescaled |
+| `target_dim` | Particle bounds larger than this are downscaled for speed, then coordinates are restored |
 
 Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. Disabled metrics are omitted; enabled metrics are present and may be `None` when the geometry cannot be measured.
 
@@ -101,7 +101,20 @@ Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. D
 - Allowed values are `bool` or numeric `{0, 1}`
 - Floating masks must not contain `NaN` or `inf`
 - Empty mask returns `None`
+- The largest connected foreground component is selected and holes are filled
+- Surrounding zero padding does not change the measured shape
+- Downscaling is skipped if its output would have a one-pixel axis
 - Shape and center arguments use image order: `(height, width)` and `(y, x)`
+
+## Project Layout
+
+- `analyzer.py`: public analysis workflow and result-coordinate restoration
+- `validation.py`: public input normalization and analysis-option validation
+- `mask_ops.py`: component selection, crop/resize transforms, and contours
+- `metrics.py`: metric formulas and public result payloads
+- `fitting.py`: circle and ellipse fitting plus oriented bounding boxes
+- `wadell/`: boundary, smoothing, discretization, and corner roundness stages
+- `utils/`: synthetic mask construction and visualization
 
 ## Utilities
 

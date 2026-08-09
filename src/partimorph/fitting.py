@@ -37,7 +37,7 @@ def _point_from_axes(
 
 def _oriented_bbox_from_angle(
     points: Points, angle: float
-) -> tuple[float, float, float, float, list[list[float]]]:
+) -> list[list[float]]:
     radians = np.deg2rad(angle)
     cos_a, sin_a = (np.cos(radians), np.sin(radians))
 
@@ -50,28 +50,12 @@ def _oriented_bbox_from_angle(
     min_width, max_width = (width_projection.min(), width_projection.max())
     min_height, max_height = (height_projection.min(), height_projection.max())
 
-    tight_width = max_width - min_width
-    tight_height = max_height - min_height
-
-    mid_width = (max_width + min_width) / 2.0
-    mid_height = (max_height + min_height) / 2.0
-
-    center = mid_width * width_vector + mid_height * height_vector
-
-    bbox = [
+    return [
         _point_from_axes(min_width, min_height, width_vector, height_vector),
         _point_from_axes(max_width, min_height, width_vector, height_vector),
         _point_from_axes(max_width, max_height, width_vector, height_vector),
         _point_from_axes(min_width, max_height, width_vector, height_vector),
     ]
-
-    return (
-        float(center[0]),
-        float(center[1]),
-        float(tight_width),
-        float(tight_height),
-        bbox,
-    )
 
 
 def find_inscribed_circle(mask: Mask) -> CircleData | None:
@@ -135,16 +119,14 @@ def fit_ellipse(mask: Mask) -> EllipseData | None:
             bbox=bbox,
         )
 
-    _, _, angle = cv2.fitEllipse(points)
-    center_x, center_y, tight_width, tight_height, bbox = _oriented_bbox_from_angle(
-        points, angle
-    )
+    (center_x, center_y), (width, height), angle = cv2.fitEllipse(points)
+    bbox = _oriented_bbox_from_angle(points, angle)
 
     return _ellipse_payload(
         center_x=center_x,
         center_y=center_y,
         angle=angle,
-        width=tight_width,
-        height=tight_height,
+        width=width,
+        height=height,
         bbox=bbox,
     )

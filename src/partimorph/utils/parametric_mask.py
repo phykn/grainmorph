@@ -13,15 +13,15 @@ def _build_info(
     frequencies: np.ndarray,
     phases: np.ndarray,
 ) -> dict:
-    abs_error = abs(roundness - achieved)
+    abs_error = float(abs(roundness - achieved))
     return {
-        "sphericity_target": sphericity,
-        "roundness_target": roundness,
-        "roundness_achieved": achieved,
+        "sphericity_target": float(sphericity),
+        "roundness_target": float(roundness),
+        "roundness_achieved": float(achieved),
         "abs_error": abs_error,
-        "report_tol": report_tol,
-        "target_met": abs_error <= report_tol,
-        "amplitude": amplitude,
+        "report_tol": float(report_tol),
+        "target_met": bool(abs_error <= report_tol),
+        "amplitude": float(amplitude),
         "frequencies": frequencies.tolist(),
         "phases": phases.tolist(),
     }
@@ -135,12 +135,22 @@ def create_particle_mask(
     Returns:
         The binary mask as a numpy array, or a tuple of (mask, info_dict).
     """
-    sphericity = np.clip(sphericity, 0.001, 1.0)
-    roundness = np.clip(roundness, 0.0, 1.0)
-    radius = float(radius)
+    try:
+        radius = float(radius)
+        sphericity = float(sphericity)
+        roundness = float(roundness)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "radius, sphericity, and roundness must be finite numbers."
+        ) from None
 
     if not np.isfinite(radius) or radius < 0:
-        raise ValueError("Invalid radius")
+        raise ValueError("radius must be finite and >= 0.")
+    if not np.isfinite(sphericity) or not np.isfinite(roundness):
+        raise ValueError("sphericity and roundness must be finite.")
+
+    sphericity = float(np.clip(sphericity, 0.001, 1.0))
+    roundness = float(np.clip(roundness, 0.0, 1.0))
     if num_angles < 3:
         raise ValueError("Invalid angles")
 
@@ -194,6 +204,8 @@ def create_particle_mask(
     if not return_info:
         return mask
 
+    measured = compute_roundness(mask.astype(np.uint8, copy=False))
+    achieved = float(measured["val"]) if measured else 0.0
     info = _build_info(
         sphericity=sphericity,
         roundness=roundness,

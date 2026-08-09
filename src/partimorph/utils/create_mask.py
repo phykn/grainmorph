@@ -10,8 +10,8 @@ def _polygon_mask(shape: tuple[int, int], vertices: np.ndarray) -> np.ndarray:
 def create_circle_mask(
     shape: tuple[int, int], center: tuple[int, int], radius: float
 ) -> np.ndarray:
-    if radius < 0:
-        raise ValueError("radius must be >= 0.")
+    if not np.isfinite(radius) or radius < 0:
+        raise ValueError("radius must be finite and >= 0.")
 
     h, w = shape
     y, x = np.ogrid[:h, :w]
@@ -23,8 +23,13 @@ def create_circle_mask(
 def create_ellipse_mask(
     shape: tuple[int, int], center: tuple[int, int], radius_x: float, radius_y: float
 ) -> np.ndarray:
-    if radius_x <= 0 or radius_y <= 0:
-        raise ValueError("radius_x and radius_y must be > 0.")
+    if (
+        not np.isfinite(radius_x)
+        or not np.isfinite(radius_y)
+        or radius_x <= 0
+        or radius_y <= 0
+    ):
+        raise ValueError("radius_x and radius_y must be finite and > 0.")
 
     h, w = shape
     y, x = np.ogrid[:h, :w]
@@ -77,8 +82,8 @@ def create_triangle_mask(
 def create_pentagon_mask(
     shape: tuple[int, int], center: tuple[int, int], radius: float
 ) -> np.ndarray:
-    if radius <= 0:
-        raise ValueError("radius must be > 0.")
+    if not np.isfinite(radius) or radius <= 0:
+        raise ValueError("radius must be finite and > 0.")
 
     angles = np.linspace(0, 2 * np.pi, 5, endpoint=False) - np.pi / 2
     vertices = polar_vertices(center=center, radii=radius, angles=angles)
@@ -92,10 +97,10 @@ def create_star_mask(
     inner_radius: float,
     num_points: int = 5,
 ) -> np.ndarray:
-    if outer_radius <= 0:
-        raise ValueError("outer_radius must be > 0.")
-    if inner_radius <= 0:
-        raise ValueError("inner_radius must be > 0.")
+    if not np.isfinite(outer_radius) or outer_radius <= 0:
+        raise ValueError("outer_radius must be finite and > 0.")
+    if not np.isfinite(inner_radius) or inner_radius <= 0:
+        raise ValueError("inner_radius must be finite and > 0.")
     if not isinstance(num_points, (int, np.integer)):
         raise TypeError("num_points must be an integer.")
     if num_points < 2:
