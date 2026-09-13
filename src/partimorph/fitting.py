@@ -1,61 +1,8 @@
 import cv2
 import numpy as np
-from .schema import CircleData, EllipseData, Mask, Points
+
 from .mask_ops import crop_mask, get_contours
-
-
-def _ellipse_payload(
-    *,
-    center_x: float,
-    center_y: float,
-    angle: float,
-    width: float,
-    height: float,
-    bbox: list[list[float]],
-) -> EllipseData:
-    return {
-        "major": float(max(width, height)),
-        "minor": float(min(width, height)),
-        "x": float(center_x),
-        "y": float(center_y),
-        "angle": float(angle),
-        "w": float(width),
-        "h": float(height),
-        "bbox": bbox,
-    }
-
-
-def _point_from_axes(
-    width_coord: float,
-    height_coord: float,
-    width_vector: np.ndarray,
-    height_vector: np.ndarray,
-) -> list[float]:
-    point = width_coord * width_vector + height_coord * height_vector
-    return [float(point[0]), float(point[1])]
-
-
-def _oriented_bbox_from_angle(
-    points: Points, angle: float
-) -> list[list[float]]:
-    radians = np.deg2rad(angle)
-    cos_a, sin_a = (np.cos(radians), np.sin(radians))
-
-    width_vector = np.array([cos_a, sin_a])
-    height_vector = np.array([-sin_a, cos_a])
-
-    width_projection = points @ width_vector
-    height_projection = points @ height_vector
-
-    min_width, max_width = (width_projection.min(), width_projection.max())
-    min_height, max_height = (height_projection.min(), height_projection.max())
-
-    return [
-        _point_from_axes(min_width, min_height, width_vector, height_vector),
-        _point_from_axes(max_width, min_height, width_vector, height_vector),
-        _point_from_axes(max_width, max_height, width_vector, height_vector),
-        _point_from_axes(min_width, max_height, width_vector, height_vector),
-    ]
+from .schema import CircleData, EllipseData, Mask, Points
 
 
 def find_inscribed_circle(mask: Mask) -> CircleData | None:
@@ -65,7 +12,7 @@ def find_inscribed_circle(mask: Mask) -> CircleData | None:
         return None
 
     distance_transform = cv2.distanceTransform(
-        cropped_mask.astype(np.uint8), cv2.DIST_L2, cv2.DIST_MASK_PRECISE
+        cropped_mask.astype(np.uint8, copy=False), cv2.DIST_L2, cv2.DIST_MASK_PRECISE
     )
 
     max_idx = np.argmax(distance_transform)
@@ -88,11 +35,7 @@ def find_enclosing_circle(mask: Mask) -> CircleData | None:
 
     (center_x, center_y), radius = cv2.minEnclosingCircle(hull)
 
-    x = float(center_x)
-    y = float(center_y)
-    r = float(radius)
-
-    return {"x": x, "y": y, "r": r}
+    return {"x": float(center_x), "y": float(center_y), "r": float(radius)}
 
 
 def fit_ellipse(mask: Mask) -> EllipseData | None:
@@ -100,7 +43,7 @@ def fit_ellipse(mask: Mask) -> EllipseData | None:
     if not contours:
         return None
 
-    points: Points = np.concatenate(contours).astype(np.float32)
+    points: Points = np.concatenate(contours).reshape(-1, 2).astype(np.float32)
     if len(points) < 5:
         rect = cv2.minAreaRect(points)
         (center_x, center_y), (width, height), angle = rect
@@ -108,25 +51,29 @@ def fit_ellipse(mask: Mask) -> EllipseData | None:
         if width <= 1e-06 or height <= 1e-06:
             return None
 
-        box = cv2.boxPoints(rect)
-        bbox = [[float(x), float(y)] for x, y in box]
-        return _ellipse_payload(
-            center_x=center_x,
-            center_y=center_y,
-            angle=angle,
-            width=width,
-            height=height,
-            bbox=bbox,
-        )
+        bbox = cv2.boxPoints(rect).tolist()
+    else:
+        (center_x, center_y), (width, height), angle = cv2.fitEllipse(points)
+        bbox = _oriented_bbox_from_angle(points, angle)
 
-    (center_x, center_y), (width, height), angle = cv2.fitEllipse(points)
-    bbox = _oriented_bbox_from_angle(points, angle)
+    return {
+        "major": float(max(width, height)),
+        "minor": float(min(width, height)),
+        "x": float(center_x),
+        "y": float(center_y),
+        "angle": float(angle),
+        "w": float(width),
+        "h": float(height),
+        "bbox": bbox,
+    }
 
-    return _ellipse_payload(
-        center_x=center_x,
-        center_y=center_y,
-        angle=angle,
-        width=width,
-        height=height,
-        bbox=bbox,
-    )
+
+def _oriented_bbox_from_angle(points: Points, angle: float) -> list[list[float]]:
+    radians = np.deg2rad(angle)
+    cos_a, sin_a = np.cos(radians), np.sin(radians)
+    axes = np.array([[cos_a, -sin_a], [sin_a, cos_a]])
+    projected = points @ axes
+    min_x, min_y = projected.min(axis=0)
+    max_x, max_y = projected.max(axis=0)
+    corners = np.array([[min_x, min_y], [max_x, min_y], [max_x, max_y], [min_x, max_y]])
+    return (corners @ axes.T).tolist()

@@ -4,40 +4,6 @@ from typing import Any, Mapping
 from matplotlib.patches import Circle, Ellipse, Polygon
 
 
-def _add_circle_overlay(
-    ax, circle_data: Mapping[str, float], *, color: str, label: str, marker: str
-) -> None:
-    x = circle_data["x"]
-    y = circle_data["y"]
-    r = circle_data["r"]
-    ax.add_patch(Circle((x, y), r, color=color, fill=False, label=label))
-    ax.scatter(x, y, color=color, marker=marker)
-
-
-def _add_ellipse_overlay(ax, ellipse: Mapping[str, Any]) -> None:
-    ax.add_patch(
-        Ellipse(
-            (ellipse["x"], ellipse["y"]),
-            ellipse["w"],
-            ellipse["h"],
-            angle=-ellipse["angle"],
-            color="yellow",
-            fill=False,
-            label="Fitted Ellipse",
-        )
-    )
-    if ellipse.get("bbox"):
-        ax.add_patch(
-            Polygon(
-                ellipse["bbox"],
-                closed=True,
-                color="green",
-                fill=False,
-                label="Bounding Box",
-            )
-        )
-
-
 def plot_analysis_results(
     mask: np.ndarray,
     results: Mapping[str, Any],
@@ -95,3 +61,37 @@ def plot_analysis_results(
     plt.tight_layout()
     if show:
         plt.show()
+
+
+def _add_circle_overlay(
+    ax, circle_data: Mapping[str, float], *, color: str, label: str, marker: str
+) -> None:
+    x = circle_data["x"]
+    y = circle_data["y"]
+    r = circle_data["r"]
+    ax.add_patch(Circle((x, y), r, color=color, fill=False, label=label))
+    ax.scatter(x, y, color=color, marker=marker)
+
+
+def _add_ellipse_overlay(ax, ellipse: Mapping[str, Any]) -> None:
+    ax.add_patch(
+        Ellipse(
+            (ellipse["x"], ellipse["y"]),
+            ellipse["w"],
+            ellipse["h"],
+            angle=ellipse["angle"],
+            color="yellow",
+            fill=False,
+            label="Fitted Ellipse",
+        )
+    )
+    if ellipse.get("bbox"):
+        ax.add_patch(
+            Polygon(
+                ellipse["bbox"],
+                closed=True,
+                color="green",
+                fill=False,
+                label="Bounding Box",
+            )
+        )

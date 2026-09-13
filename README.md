@@ -133,6 +133,12 @@ Visualization:
 
 - `pm.utils.plot_analysis_results(mask, results)`
 
+## Changes in 0.1.8
+
+- Corrected the fitted ellipse overlay orientation for rotated particles.
+- Unified inscribed-circle fitting used by sphericity and Wadell roundness.
+- Simplified ellipse fitting and bounding-box coordinate transforms while preserving the public API and analysis results.
+
 ## License
 
 MIT

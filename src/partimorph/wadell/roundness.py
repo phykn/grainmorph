@@ -1,12 +1,13 @@
 import cv2
 import numpy as np
 
+from ..fitting import find_inscribed_circle
+from ..mask_ops import crop_mask
+from ..schema import Mask, Points
 from .boundary import extract_boundary
 from .corner import compute_corner_circles
 from .discretize import classify_concave_convex, discretize_boundary
 from .smoothing import smooth_boundary
-from ..mask_ops import crop_mask
-from ..schema import Mask, Points
 
 
 def compute_roundness(
@@ -20,16 +21,12 @@ def compute_roundness(
     if mask_cropped.size == 0:
         return None
 
-    distance_transform = cv2.distanceTransform(
-        mask_cropped, cv2.DIST_L2, cv2.DIST_MASK_PRECISE
-    )
-    max_radius = float(np.max(distance_transform))
-    if max_radius < 1e-6:
+    inscribed = find_inscribed_circle(mask_cropped)
+    if inscribed is None or inscribed["r"] < 1e-6:
         return None
 
-    max_idx = np.argmax(distance_transform)
-    peak_y, peak_x = np.unravel_index(max_idx, distance_transform.shape)
-    max_radius_pos = np.array([float(peak_x), float(peak_y)])
+    max_radius = inscribed["r"]
+    max_radius_pos = np.array([inscribed["x"], inscribed["y"]])
 
     boundary = extract_boundary(mask_cropped)
     if len(boundary) < 4:
