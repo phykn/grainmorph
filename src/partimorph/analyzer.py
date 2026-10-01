@@ -1,6 +1,6 @@
 import numpy as np
 
-from .mask_ops import PreparedMask, prepare_mask
+from .mask_ops import prepare_mask
 from .metrics import (
     compute_aspect_ratio,
     compute_circularity,
@@ -44,36 +44,6 @@ def analyze_mask(
     if use_sphericity:
         results["sphericity"] = compute_sphericity(final_mask, eps=eps)
 
-    _restore_results(results, prepared)
+    prepared.restore_results(results)
 
     return results
-
-
-def _restore_results(
-    results: AnalysisResult,
-    prepared: PreparedMask,
-) -> None:
-    scale = prepared.scale
-
-    if results.get("sphericity"):
-        for key in ("inscribed", "enclosing"):
-            circle_data = results["sphericity"][key]
-            circle_data["x"] = float(circle_data["x"] * scale + prepared.offset_x)
-            circle_data["y"] = float(circle_data["y"] * scale + prepared.offset_y)
-            circle_data["r"] = float(circle_data["r"] * scale)
-
-    if results.get("aspect_ratio"):
-        ellipse = results["aspect_ratio"]["ellipse"]
-        ellipse["x"] = float(ellipse["x"] * scale + prepared.offset_x)
-        ellipse["y"] = float(ellipse["y"] * scale + prepared.offset_y)
-        ellipse["major"] = float(ellipse["major"] * scale)
-        ellipse["minor"] = float(ellipse["minor"] * scale)
-        ellipse["w"] = float(ellipse["w"] * scale)
-        ellipse["h"] = float(ellipse["h"] * scale)
-        ellipse["bbox"] = [
-            [
-                float(pt[0] * scale + prepared.offset_x),
-                float(pt[1] * scale + prepared.offset_y),
-            ]
-            for pt in ellipse["bbox"]
-        ]

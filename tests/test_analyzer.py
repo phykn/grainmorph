@@ -156,3 +156,48 @@ def test_metrics_are_invariant_to_zero_padding():
         np.testing.assert_allclose(small_circle["r"], large_circle["r"])
         np.testing.assert_allclose(large_circle["x"] - small_circle["x"], 950)
         np.testing.assert_allclose(large_circle["y"] - small_circle["y"], 950)
+
+
+@pytest.mark.parametrize("target_dim", [32, 384])
+def test_analysis_geometry_is_invariant_to_translation(target_dim):
+    mask = pm.utils.create_ellipse_mask((100, 120), (50, 60), 35, 20)
+    shifted = np.pad(mask, ((23, 0), (37, 0)))
+
+    reference = pm.analyze_mask(mask, target_dim=target_dim)
+    actual = pm.analyze_mask(shifted, target_dim=target_dim)
+
+    for key in reference:
+        assert actual[key] is not None
+        np.testing.assert_allclose(actual[key]["val"], reference[key]["val"])
+
+    for key in ("inscribed", "enclosing"):
+        circle = actual["sphericity"][key]
+        original = reference["sphericity"][key]
+        np.testing.assert_allclose(
+            [circle["x"] - original["x"], circle["y"] - original["y"]], [37, 23]
+        )
+        np.testing.assert_allclose(circle["r"], original["r"])
+
+    ellipse = actual["aspect_ratio"]["ellipse"]
+    original = reference["aspect_ratio"]["ellipse"]
+    np.testing.assert_allclose(
+        [ellipse["x"] - original["x"], ellipse["y"] - original["y"]], [37, 23]
+    )
+    for key in ("major", "minor", "w", "h", "angle"):
+        np.testing.assert_allclose(ellipse[key], original[key])
+    np.testing.assert_allclose(ellipse["bbox"], np.asarray(original["bbox"]) + [37, 23])
+
+
+@pytest.mark.parametrize(
+    "enabled",
+    [(), ("aspect_ratio",), ("roundness",), ("circularity",), ("sphericity",)],
+)
+def test_analysis_metric_selection(enabled):
+    mask = pm.utils.create_circle_mask((80, 80), (40, 40), 20)
+    keys = ("aspect_ratio", "roundness", "circularity", "sphericity")
+    options = {f"use_{key}": key in enabled for key in keys}
+
+    results = pm.analyze_mask(mask, **options)
+
+    assert set(results) == set(enabled)
+    assert all(result is not None for result in results.values())

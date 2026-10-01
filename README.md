@@ -25,6 +25,14 @@ For local development:
 pip install -e ".[dev]"
 ```
 
+Run the tests and code checks with the same Python environment:
+
+```bash
+python -m pytest -q
+python -m ruff check --isolated .
+python -m ruff format --isolated --check src tests
+```
+
 ## Quick Start
 
 ```python
@@ -71,6 +79,16 @@ pm.analyze_mask(
 | `eps` | Tolerance for geometric computations |
 | `target_dim` | Particle bounds larger than this are downscaled for speed, then coordinates are restored |
 
+`roundness_params` accepts these Wadell options. Defaults are defined in
+`wadell/roundness.py` and also apply to synthetic particle calibration:
+
+| Option | Default | Stage |
+|---|---|---|
+| `max_dev_thresh` | `0.3` | Boundary discretization |
+| `circle_fit_thresh` | `0.98` | Corner circle fitting |
+| `alpha_ratio` | `0.05` | Boundary smoothing |
+| `beta_ratio` | `0.001` | Boundary smoothing |
+
 Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. Disabled metrics are omitted; enabled metrics are present and may be `None` when the geometry cannot be measured.
 
 ## Result Shape
@@ -108,13 +126,13 @@ Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. D
 
 ## Project Layout
 
-- `analyzer.py`: public analysis workflow and result-coordinate restoration
+- `analyzer.py`: public analysis workflow and metric selection
 - `validation.py`: public input normalization and analysis-option validation
-- `mask_ops.py`: component selection, crop/resize transforms, and contours
+- `mask_ops.py`: component selection, contours, and `PreparedMask` crop/resize transforms with result-coordinate restoration
 - `metrics.py`: metric formulas and public result payloads
 - `fitting.py`: circle and ellipse fitting plus oriented bounding boxes
 - `wadell/`: boundary, smoothing, discretization, and corner roundness stages
-- `utils/`: synthetic mask construction and visualization
+- `utils/`: basic mask construction, parametric particle calibration and reporting, and visualization
 
 ## Utilities
 
@@ -128,6 +146,12 @@ Mask constructors:
 - `pm.utils.create_pentagon_mask(...)`
 - `pm.utils.create_star_mask(...)`
 - `pm.utils.create_particle_mask(...)`
+
+`create_particle_mask` attempts to reach the requested roundness by calibrating
+surface roughness. Set `seed` for reproducible masks and `return_info=True` to
+receive `(mask, info)`. The report measures the returned mask, including any
+clipping at the image bounds; `target_met` compares its roundness error with
+`report_tol`. A zero-radius particle reports roundness `0.0`.
 
 Visualization:
 

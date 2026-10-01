@@ -1,13 +1,13 @@
 from .create_mask import (
-    create_circle_mask as create_circle_mask,
-    create_ellipse_mask as create_ellipse_mask,
-    create_pentagon_mask as create_pentagon_mask,
-    create_rectangle_mask as create_rectangle_mask,
-    create_square_mask as create_square_mask,
-    create_star_mask as create_star_mask,
-    create_triangle_mask as create_triangle_mask,
+    create_circle_mask,
+    create_ellipse_mask,
+    create_pentagon_mask,
+    create_rectangle_mask,
+    create_square_mask,
+    create_star_mask,
+    create_triangle_mask,
 )
-from .parametric_mask import create_particle_mask as create_particle_mask
+from .parametric_mask import create_particle_mask
 
 
 def plot_analysis_results(*args, **kwargs):
@@ -19,11 +19,11 @@ def plot_analysis_results(*args, **kwargs):
 __all__ = [
     "create_circle_mask",
     "create_ellipse_mask",
+    "create_particle_mask",
     "create_pentagon_mask",
     "create_rectangle_mask",
     "create_square_mask",
     "create_star_mask",
     "create_triangle_mask",
-    "create_particle_mask",
     "plot_analysis_results",
 ]

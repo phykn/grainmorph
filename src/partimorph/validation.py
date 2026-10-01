@@ -1,6 +1,7 @@
 from numbers import Integral, Real
 
 import numpy as np
+
 from .schema import Mask
 
 
@@ -10,9 +11,7 @@ def validate_analysis_params(eps: float, target_dim: int) -> tuple[float, int]:
     if not np.isfinite(eps) or eps <= 0:
         raise ValueError("eps must be > 0 and finite.")
 
-    if isinstance(target_dim, (bool, np.bool_)) or not isinstance(
-        target_dim, Integral
-    ):
+    if isinstance(target_dim, (bool, np.bool_)) or not isinstance(target_dim, Integral):
         raise TypeError("target_dim must be an integer.")
     if target_dim <= 0:
         raise ValueError("target_dim must be > 0.")

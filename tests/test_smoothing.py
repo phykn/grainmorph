@@ -20,9 +20,10 @@ def _dense_smoothing(
         (num_points, num_points),
         dtype=int,
     )
-    regularization = np.eye(num_points) - coefficients[
-        np.minimum(distance_matrix, len(coefficients) - 1)
-    ]
+    regularization = (
+        np.eye(num_points)
+        - coefficients[np.minimum(distance_matrix, len(coefficients) - 1)]
+    )
     result, *_ = np.linalg.lstsq(regularization, coordinates, rcond=None)
     return result
 

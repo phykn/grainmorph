@@ -102,3 +102,25 @@ def test_create_particle_mask_rejects_non_finite_targets(field):
             radius=8,
             **options,
         )
+
+
+@pytest.mark.parametrize("radius", [0, 20])
+def test_particle_report_preserves_seeded_mask(radius):
+    options = {
+        "shape": (80, 80),
+        "center": (40, 40),
+        "radius": radius,
+        "sphericity": 0.8,
+        "roundness": 0.6,
+        "seed": 42,
+    }
+
+    mask = pm.utils.create_particle_mask(**options)
+    reported, info = pm.utils.create_particle_mask(**options, return_info=True)
+
+    np.testing.assert_array_equal(mask, reported)
+    assert info["target_met"] == (info["abs_error"] <= info["report_tol"])
+    assert info["abs_error"] == abs(
+        info["roundness_target"] - info["roundness_achieved"]
+    )
+    json.dumps(info)

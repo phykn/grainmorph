@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from .schema import Mask
+from .schema import AnalysisResult, Mask
 
 
 @dataclass(frozen=True)
@@ -12,6 +12,30 @@ class PreparedMask:
     offset_x: float
     offset_y: float
     scale: float
+
+    def restore_results(self, results: AnalysisResult) -> None:
+        sphericity = results.get("sphericity")
+        if sphericity:
+            for key in ("inscribed", "enclosing"):
+                circle = sphericity[key]
+                circle["x"] = float(circle["x"] * self.scale + self.offset_x)
+                circle["y"] = float(circle["y"] * self.scale + self.offset_y)
+                circle["r"] = float(circle["r"] * self.scale)
+
+        aspect_ratio = results.get("aspect_ratio")
+        if aspect_ratio:
+            ellipse = aspect_ratio["ellipse"]
+            ellipse["x"] = float(ellipse["x"] * self.scale + self.offset_x)
+            ellipse["y"] = float(ellipse["y"] * self.scale + self.offset_y)
+            for key in ("major", "minor", "w", "h"):
+                ellipse[key] = float(ellipse[key] * self.scale)
+            ellipse["bbox"] = [
+                [
+                    float(x * self.scale + self.offset_x),
+                    float(y * self.scale + self.offset_y),
+                ]
+                for x, y in ellipse["bbox"]
+            ]
 
 
 def prepare_mask(mask: Mask, target_dim: int) -> PreparedMask:
@@ -33,8 +57,8 @@ def prepare_mask(mask: Mask, target_dim: int) -> PreparedMask:
     scale = 1.0
     if max(source_height, source_width) > target_dim:
         resize_scale = target_dim / max(source_height, source_width)
-        target_width = max(1, int(round(source_width * resize_scale)))
-        target_height = max(1, int(round(source_height * resize_scale)))
+        target_width = max(1, round(source_width * resize_scale))
+        target_height = max(1, round(source_height * resize_scale))
         if target_width > 1 and target_height > 1:
             translation = (resize_scale - 1.0) / 2.0
             transform = np.array(

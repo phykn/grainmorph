@@ -21,11 +21,7 @@ def smooth_boundary(
 
     eigenvalues = np.fft.fft(kernel)
     transformed = np.fft.fft(coordinates, axis=0)
-    tolerance = (
-        np.finfo(float).eps
-        * num_points
-        * float(np.max(np.abs(eigenvalues)))
-    )
+    tolerance = np.finfo(float).eps * num_points * float(np.max(np.abs(eigenvalues)))
     usable = np.abs(eigenvalues) > tolerance
     solution = np.zeros_like(transformed)
     np.divide(
@@ -37,9 +33,7 @@ def smooth_boundary(
     return np.fft.ifft(solution, axis=0).real
 
 
-def _regularization_kernel(
-    num_points: int, alpha: float, beta: float
-) -> np.ndarray:
+def _regularization_kernel(num_points: int, alpha: float, beta: float) -> np.ndarray:
     coefficients = alpha * np.array([-2, 1, 0, 0]) + beta * np.array([-6, 4, -1, 0])
     indices = np.arange(num_points)
     distances = np.minimum(indices, num_points - indices)

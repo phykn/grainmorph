@@ -1,6 +1,8 @@
+from collections.abc import Mapping
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Any, Mapping
 from matplotlib.patches import Circle, Ellipse, Polygon
 
 
@@ -12,7 +14,7 @@ def plot_analysis_results(
     show: bool = True,
 ) -> None:
 
-    fig, ax = plt.subplots(figsize=figsize)
+    _, ax = plt.subplots(figsize=figsize)
     ax.imshow(mask, cmap="gray", alpha=0.3)
 
     sphericity_data = results.get("sphericity")

@@ -15,23 +15,10 @@ from .schema import (
 )
 
 
-def compute_roundness(
-    mask: Mask,
-    *,
-    max_dev_thresh: float = 0.3,
-    circle_fit_thresh: float = 0.98,
-    alpha_ratio: float = 0.05,
-    beta_ratio: float = 0.001,
-) -> RoundnessResult | None:
+def compute_roundness(mask: Mask, **params: float) -> RoundnessResult | None:
     from .wadell import compute_roundness as compute_roundness_wadell
 
-    value = compute_roundness_wadell(
-        mask,
-        max_dev_thresh=max_dev_thresh,
-        circle_fit_thresh=circle_fit_thresh,
-        alpha_ratio=alpha_ratio,
-        beta_ratio=beta_ratio,
-    )
+    value = compute_roundness_wadell(mask, **params)
 
     if value is None:
         return None

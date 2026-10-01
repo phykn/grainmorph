@@ -1,6 +1,6 @@
-import numpy as np
 from typing import Annotated, TypeAlias, TypedDict
 
+import numpy as np
 
 Bbox: TypeAlias = list[list[float]]
 Mask: TypeAlias = Annotated[np.ndarray, "shape=(H, W), dtype=uint8"]
