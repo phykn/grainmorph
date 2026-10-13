@@ -122,7 +122,8 @@ Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. D
 - The largest connected foreground component is selected and holes are filled
 - Surrounding zero padding does not change the measured shape
 - Downscaling is skipped if its output would have a one-pixel axis
-- Shape and center arguments use image order: `(height, width)` and `(y, x)`
+- Shape, center, and rectangle corner arguments use image order: `(height, width)` and `(y, x)`
+- Triangle vertices use Cartesian order `(x, y)`, matching polygon coordinates
 
 ## Project Layout
 
@@ -131,7 +132,10 @@ Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. D
 - `mask_ops.py`: component selection, contours, and `PreparedMask` crop/resize transforms with result-coordinate restoration
 - `metrics.py`: metric formulas and public result payloads
 - `fitting.py`: circle and ellipse fitting plus oriented bounding boxes
-- `wadell/`: boundary, smoothing, discretization, and corner roundness stages
+- `wadell/roundness.py`: roundness options and the boundary-to-radius workflow
+- `wadell/boundary.py` and `smoothing.py`: closed boundary extraction and periodic smoothing
+- `wadell/discretize.py`: boundary approximation with `(x, y)` point arrays
+- `wadell/corner.py`: convex corner selection, circle fitting, and accepted corner radii
 - `utils/`: basic mask construction, parametric particle calibration and reporting, and visualization
 
 ## Utilities
@@ -146,6 +150,12 @@ Mask constructors:
 - `pm.utils.create_pentagon_mask(...)`
 - `pm.utils.create_star_mask(...)`
 - `pm.utils.create_particle_mask(...)`
+
+For example, a triangle in a non-square image uses `(x, y)` vertices:
+
+```python
+mask = pm.utils.create_triangle_mask((20, 60), (30, 2), (40, 2), (30, 8))
+```
 
 `create_particle_mask` attempts to reach the requested roundness by calibrating
 surface roughness. Set `seed` for reproducible masks and `return_info=True` to

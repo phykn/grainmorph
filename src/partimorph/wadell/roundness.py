@@ -3,10 +3,10 @@ import numpy as np
 
 from ..fitting import find_inscribed_circle
 from ..mask_ops import crop_mask
-from ..schema import Mask, Points
+from ..schema import Mask
 from .boundary import extract_boundary
-from .corner import compute_corner_circles
-from .discretize import classify_concave_convex, discretize_boundary
+from .corner import compute_corner_radii
+from .discretize import discretize_boundary
 from .smoothing import smooth_boundary
 
 
@@ -49,15 +49,8 @@ def compute_roundness(
     if len(keypoints) < 3:
         return None
 
-    _, convex_points = classify_concave_convex(keypoints)
-    if len(convex_points) < 2:
-        return None
-
-    convex_points: Points = convex_points.astype(np.float32)
-
-    radii, _ = compute_corner_circles(
-        convex_points,
-        keypoints.astype(np.float32),
+    radii = compute_corner_radii(
+        keypoints,
         max_radius,
         max_radius_pos,
         circle_fit_thresh,

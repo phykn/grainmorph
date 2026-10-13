@@ -6,6 +6,17 @@ import pytest
 import partimorph as pm
 
 
+def test_triangle_vertices_use_cartesian_order():
+    vertices = ((30, 2), (40, 2), (30, 8))
+
+    mask = pm.utils.create_triangle_mask((20, 60), *vertices)
+
+    assert mask.dtype == bool
+    assert all(mask[y, x] for x, y in vertices)
+    y, x = np.nonzero(mask)
+    assert (y.min(), y.max(), x.min(), x.max()) == (2, 8, 30, 40)
+
+
 def test_create_particle_mask():
     mask = pm.utils.create_particle_mask(
         shape=(256, 256),

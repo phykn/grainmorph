@@ -75,6 +75,7 @@ def create_triangle_mask(
     v2: tuple[int, int],
     v3: tuple[int, int],
 ) -> np.ndarray:
+    """Create a triangle from (x, y) vertices in a (height, width) image."""
     vertices = np.array([v1, v2, v3])
     return _polygon_mask(shape, vertices)
 

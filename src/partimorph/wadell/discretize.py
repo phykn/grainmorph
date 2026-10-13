@@ -2,21 +2,18 @@ import numpy as np
 
 
 def discretize_boundary(boundary: np.ndarray, max_dev_thresh: float) -> np.ndarray:
-    x = boundary[:, 0]
-    y = boundary[:, 1]
-    num_pts = len(x)
+    num_pts = len(boundary)
 
     segment_start = 0
     segment_end = num_pts
-    keypoints = [[x[segment_start], y[segment_start]]]
+    keypoints = [boundary[0]]
 
-    x = np.append(x, x[0])
-    y = np.append(y, y[0])
-    total_length = len(x)
+    boundary = np.vstack([boundary, boundary[0]])
+    total_length = len(boundary)
 
     while segment_start < num_pts:
         max_dev, position_index = max_line_deviation(
-            x[segment_start:segment_end], y[segment_start:segment_end]
+            boundary[segment_start:segment_end]
         )
 
         while max_dev > max_dev_thresh:
@@ -28,12 +25,12 @@ def discretize_boundary(boundary: np.ndarray, max_dev_thresh: float) -> np.ndarr
 
             segment_end = new_end
             max_dev, position_index = max_line_deviation(
-                x[segment_start:segment_end], y[segment_start:segment_end]
+                boundary[segment_start:segment_end]
             )
 
         if segment_end != total_length or segment_start == 0:
             idx = min(segment_end - 1, total_length - 1)
-            keypoints.append([x[idx], y[idx]])
+            keypoints.append(boundary[idx])
 
         segment_start = segment_end
         segment_end = total_length
@@ -41,43 +38,11 @@ def discretize_boundary(boundary: np.ndarray, max_dev_thresh: float) -> np.ndarr
     return np.array(keypoints)
 
 
-def classify_concave_convex(keypoints: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    wrapped_kpts = np.vstack([keypoints[-1], keypoints, keypoints[0]])
-
-    vec1 = wrapped_kpts[1:-1] - wrapped_kpts[:-2]
-    vec2 = wrapped_kpts[2:] - wrapped_kpts[1:-1]
-
-    angle = np.arctan2(
-        vec1[:, 0] * vec2[:, 1] - vec1[:, 1] * vec2[:, 0],
-        vec1[:, 0] * vec2[:, 0] + vec1[:, 1] * vec2[:, 1],
-    )
-
-    area = signed_area(keypoints)
-    orientation = 1.0 if area >= 0.0 else -1.0
-    oriented = angle * orientation
-
-    concave_locs = np.where(oriented < 0.0)[0]
-    roll_idx = concave_locs[0] if len(concave_locs) > 0 else int(np.argmax(oriented))
-
-    keypoints = np.roll(keypoints, -roll_idx, axis=0)
-    oriented = np.roll(oriented, -roll_idx)
-
-    return (keypoints[oriented < 0.0], keypoints[oriented > 0.0])
-
-
-def signed_area(points: np.ndarray) -> float:
-    x = points[:, 0]
-    y = points[:, 1]
-
-    area = np.dot(x[:-1], y[1:]) + x[-1] * y[0] - np.dot(y[:-1], x[1:]) - y[-1] * x[0]
-
-    return 0.5 * float(area)
-
-
-def max_line_deviation(x: np.ndarray, y: np.ndarray) -> tuple[float, int]:
-    if len(x) <= 1:
+def max_line_deviation(points: np.ndarray) -> tuple[float, int]:
+    if len(points) <= 1:
         return (0.0, 0)
 
+    x, y = points.T
     x0, x1 = (x[0], x[-1])
     y0, y1 = (y[0], y[-1])
 
