@@ -33,6 +33,18 @@ python -m ruff check --isolated .
 python -m ruff format --isolated --check src tests
 ```
 
+## Releasing
+
+Pushing a `vX.Y.Z` tag publishes that version to PyPI through
+`.github/workflows/publish.yml`, using PyPI trusted publishing (no API token):
+
+1. Set the same version in `pyproject.toml` and `src/grainmorph/__init__.py`, and add a `Changes in X.Y.Z` section below.
+2. Commit, then tag and push: `git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin main vX.Y.Z`.
+
+The workflow fails if the tag and the `pyproject.toml` version differ, then runs the tests before uploading.
+PyPI must list this repository as a trusted publisher for `grainmorph`
+(owner `phykn`, repository `grainmorph`, workflow `publish.yml`, environment `pypi`).
+
 ## Quick Start
 
 ```python
