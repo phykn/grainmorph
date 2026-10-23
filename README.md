@@ -167,7 +167,7 @@ Visualization:
 
 - `pm.utils.plot_analysis_results(mask, results)`
 
-## Unreleased
+## Changes in 0.1.9
 
 - Wadell roundness is several times faster: corner circle fits are vectorized and boundary discretization does less per-step work. Results are unchanged.
 - `create_particle_mask` calibrates roughness with 12 bisection steps by default instead of 20, about 1.5x faster. Generated masks can differ slightly; on a 108-case grid the roundness error changed by at most 0.012 and its mean was unchanged.
