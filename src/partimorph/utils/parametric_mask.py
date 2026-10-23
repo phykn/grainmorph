@@ -15,7 +15,7 @@ def create_particle_mask(
     frequencies: list[int] | np.ndarray | None = None,
     decay: float = 1.0,
     seed: int | None = None,
-    max_iter: int = 20,
+    max_iter: int = 12,
     amp_max: float = 0.45,
     metric_tol: float = 0.001,
     report_tol: float = 0.1,
