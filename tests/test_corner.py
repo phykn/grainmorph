@@ -62,7 +62,7 @@ def _corner_inputs(mask, max_dev_thresh=0.3):
     inscribed = find_inscribed_circle(mask)
     boundary = extract_boundary(mask)
     perimeter = float(
-        cv2.arcLength(boundary[:-1].astype(np.float32).reshape(-1, 1, 2), closed=True)
+        cv2.arcLength(boundary.astype(np.float32).reshape(-1, 1, 2), closed=True)
     )
     smoothed = smooth_boundary(boundary, perimeter=perimeter)
     keypoints = discretize_boundary(smoothed, max_dev_thresh)
@@ -112,13 +112,17 @@ def test_prefix_circle_fits_match_least_squares():
         np.testing.assert_allclose(center[i], expected_center, rtol=1e-9)
 
 
-def test_collinear_prefix_falls_back_to_least_squares():
-    points = np.array([[0, 0], [1, 1], [2, 2], [3, 3]], dtype=np.float32)
-    sizes = np.array([3, 4])
+@pytest.mark.parametrize("noise", [0.0, 1e-4, 1e-3, 1e-2, 1e-1])
+def test_near_collinear_prefixes_match_least_squares(noise):
+    rng = np.random.default_rng(1)
+    t = np.linspace(0.0, 30.0, 12)
+    points = np.stack([t, 0.5 * t], axis=1) + rng.normal(0.0, noise, (12, 2))
+    points = points.astype(np.float32)
+    sizes = np.arange(3, len(points) + 1)
 
     radius, center = _fit_circles(points, sizes)
 
     for i, size in enumerate(sizes):
         expected_radius, expected_center = _fit_circle(points[:size])
-        np.testing.assert_allclose(radius[i], expected_radius)
-        np.testing.assert_allclose(center[i], expected_center)
+        np.testing.assert_allclose(radius[i], expected_radius, rtol=1e-9)
+        np.testing.assert_allclose(center[i], expected_center, rtol=1e-9)

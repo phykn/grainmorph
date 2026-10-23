@@ -63,7 +63,7 @@ def create_particle_mask(
     sphericity = float(np.clip(sphericity, 0.001, 1.0))
     roundness = float(np.clip(roundness, 0.0, 1.0))
     if num_angles < 3:
-        raise ValueError("Invalid angles")
+        raise ValueError("num_angles must be >= 3.")
 
     frequencies_arr = np.asarray(
         frequencies if frequencies is not None else np.arange(2, 9), dtype=int

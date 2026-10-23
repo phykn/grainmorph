@@ -11,12 +11,4 @@ def extract_boundary(mask: np.ndarray) -> np.ndarray:
         return np.empty((0, 2), dtype=np.float64)
 
     contour = max(contours, key=cv2.contourArea)
-    points = contour.reshape(-1, 2).astype(np.float64)
-
-    if len(points) == 0:
-        return np.empty((0, 2), dtype=np.float64)
-
-    if not np.array_equal(points[0], points[-1]):
-        points = np.vstack([points, points[0]])
-
-    return points
+    return contour.reshape(-1, 2).astype(np.float64)

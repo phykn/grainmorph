@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -42,24 +44,23 @@ def max_line_deviation(points: np.ndarray) -> tuple[float, int]:
     if len(points) <= 1:
         return (0.0, 0)
 
-    x, y = points.T
-    x0, x1 = (x[0], x[-1])
-    y0, y1 = (y[0], y[-1])
+    x = points[:, 0]
+    y = points[:, 1]
+    x0, y0 = points[0].tolist()
+    x1, y1 = points[-1].tolist()
 
     dx = x1 - x0
     dy = y0 - y1
     dist_end_sq = dx * dx + dy * dy
 
     if dist_end_sq < 1e-12:
-        dx_arr = x - x0
-        dy_arr = y - y0
-        dist_sq = dx_arr * dx_arr + dy_arr * dy_arr
-        idx = int(np.argmax(dist_sq))
+        dist_sq = np.square(x - x0) + np.square(y - y0)
+        idx = int(dist_sq.argmax())
 
-        return (float(np.sqrt(dist_sq[idx])), idx)
+        return (math.sqrt(float(dist_sq[idx])), idx)
 
     c = y1 * x0 - y0 * x1
     dist_num = np.abs(dy * x + dx * y + c)
-    idx = int(np.argmax(dist_num))
+    idx = int(dist_num.argmax())
 
-    return (float(dist_num[idx] / np.sqrt(dist_end_sq)), idx)
+    return (float(dist_num[idx]) / math.sqrt(dist_end_sq), idx)

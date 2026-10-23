@@ -7,8 +7,7 @@ def smooth_boundary(
     alpha_ratio: float = 0.05,
     beta_ratio: float = 0.001,
 ) -> np.ndarray:
-    coordinates = points[:-1]
-    num_points = len(coordinates)
+    num_points = len(points)
 
     if not np.isfinite(perimeter) or perimeter <= 0:
         raise ValueError("perimeter must be > 0 and finite.")
@@ -20,7 +19,7 @@ def smooth_boundary(
     kernel = _regularization_kernel(num_points, alpha, beta)
 
     eigenvalues = np.fft.fft(kernel)
-    transformed = np.fft.fft(coordinates, axis=0)
+    transformed = np.fft.fft(points, axis=0)
     tolerance = np.finfo(float).eps * num_points * float(np.max(np.abs(eigenvalues)))
     usable = np.abs(eigenvalues) > tolerance
     solution = np.zeros_like(transformed)

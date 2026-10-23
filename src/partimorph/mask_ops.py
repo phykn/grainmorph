@@ -39,18 +39,19 @@ class PreparedMask:
 
 
 def prepare_mask(mask: Mask, target_dim: int) -> PreparedMask:
-    from scipy import ndimage
-
     cropped, crop_x, crop_y = crop_mask(mask, pad=0)
-    mask_bool = cropped.astype(bool, copy=False)
 
-    labeled_mask, num_features = ndimage.label(mask_bool)
-    if num_features > 1:
-        sizes = np.bincount(labeled_mask.ravel())
-        sizes[0] = 0
-        mask_bool = labeled_mask == np.argmax(sizes)
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        cropped, connectivity=4
+    )
+    if num_labels > 2:
+        largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+        cropped = (labels == largest).astype(np.uint8)
 
-    filled_mask = ndimage.binary_fill_holes(mask_bool).astype(np.uint8)
+    # Background 4-connected to the padded border stays empty; the rest are holes.
+    flooded = np.pad(cropped, 1)
+    cv2.floodFill(flooded, None, (0, 0), 2, flags=4)
+    filled_mask = (flooded[1:-1, 1:-1] != 2).astype(np.uint8)
     component, component_x, component_y = crop_mask(filled_mask, pad=0)
 
     source_height, source_width = component.shape

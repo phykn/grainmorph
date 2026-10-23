@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.linalg import lstsq
 
 
 def compute_corner_radii(
@@ -18,7 +17,7 @@ def compute_corner_radii(
     radii: list[float] = []
     start = 0
 
-    while start < num_points - 1:
+    while True:
         ends = np.arange(start + 3, num_points + 1)
         if len(ends) == 0:
             break
@@ -147,7 +146,7 @@ def _fit_circle(points: np.ndarray) -> tuple[float, np.ndarray]:
     B[:, 2] = 1.0
 
     d = np.square(points_norm).sum(axis=1)
-    y, *_ = lstsq(B, d, overwrite_a=True, overwrite_b=True)
+    y, *_ = np.linalg.lstsq(B, d, rcond=np.finfo(float).eps)
 
     norm_center = 0.5 * y[:2]
     norm_radius = float(np.sqrt(y[2] + np.square(norm_center).sum()))

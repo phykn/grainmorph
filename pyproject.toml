@@ -15,9 +15,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "numpy",
-    "scipy",
     "opencv-python",
-    "scikit-image",
     "matplotlib",
 ]
 

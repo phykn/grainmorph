@@ -2,12 +2,8 @@ import cv2
 import numpy as np
 
 
-def create_poly_mask(
-    shape: tuple[int, int],
-    vertices: np.ndarray,
-    dtype: np.dtype = np.uint8,
-) -> np.ndarray:
-    mask = np.zeros(shape, dtype=dtype)
+def create_poly_mask(shape: tuple[int, int], vertices: np.ndarray) -> np.ndarray:
+    mask = np.zeros(shape, dtype=np.uint8)
     pts = np.asarray(vertices, dtype=np.int32).reshape(-1, 1, 2)
 
     cv2.fillPoly(mask, [pts], 1)

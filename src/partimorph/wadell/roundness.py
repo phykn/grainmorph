@@ -29,11 +29,11 @@ def compute_roundness(
     max_radius_pos = np.array([inscribed["x"], inscribed["y"]])
 
     boundary = extract_boundary(mask_cropped)
-    if len(boundary) < 4:
+    if len(boundary) < 3:
         return None
 
     perimeter = float(
-        cv2.arcLength(boundary[:-1].astype(np.float32).reshape(-1, 1, 2), closed=True)
+        cv2.arcLength(boundary.astype(np.float32).reshape(-1, 1, 2), closed=True)
     )
     if perimeter < 1e-6:
         return None

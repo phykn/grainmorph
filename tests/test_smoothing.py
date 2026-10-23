@@ -10,8 +10,7 @@ def _dense_smoothing(
     alpha_ratio: float,
     beta_ratio: float,
 ) -> np.ndarray:
-    coordinates = points[:-1]
-    num_points = len(coordinates)
+    num_points = len(points)
     alpha = alpha_ratio * perimeter
     beta = beta_ratio * perimeter
     coefficients = alpha * np.array([-2, 1, 0, 0]) + beta * np.array([-6, 4, -1, 0])
@@ -24,7 +23,7 @@ def _dense_smoothing(
         np.eye(num_points)
         - coefficients[np.minimum(distance_matrix, len(coefficients) - 1)]
     )
-    result, *_ = np.linalg.lstsq(regularization, coordinates, rcond=None)
+    result, *_ = np.linalg.lstsq(regularization, points, rcond=None)
     return result
 
 
@@ -39,8 +38,7 @@ def _dense_smoothing(
 def test_fft_smoothing_matches_dense_least_squares(
     num_points, perimeter, alpha_ratio, beta_ratio
 ):
-    coordinates = np.random.default_rng(42).normal(size=(num_points, 2))
-    points = np.vstack([coordinates, coordinates[0]])
+    points = np.random.default_rng(42).normal(size=(num_points, 2))
 
     expected = _dense_smoothing(points, perimeter, alpha_ratio, beta_ratio)
     actual = smooth_boundary(points, perimeter, alpha_ratio, beta_ratio)

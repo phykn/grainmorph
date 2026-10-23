@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from .mask_ops import crop_mask, get_contours
-from .schema import CircleData, EllipseData, Mask, Points
+from .schema import Bbox, CircleData, EllipseData, Mask, Points
 
 
 def find_inscribed_circle(mask: Mask) -> CircleData | None:
@@ -68,7 +68,7 @@ def fit_ellipse(mask: Mask) -> EllipseData | None:
     }
 
 
-def _oriented_bbox_from_angle(points: Points, angle: float) -> list[list[float]]:
+def _oriented_bbox_from_angle(points: Points, angle: float) -> Bbox:
     radians = np.deg2rad(angle)
     cos_a, sin_a = np.cos(radians), np.sin(radians)
     axes = np.array([[cos_a, -sin_a], [sin_a, cos_a]])

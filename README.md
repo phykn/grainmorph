@@ -119,7 +119,7 @@ Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. D
 - Allowed values are `bool` or numeric `{0, 1}`
 - Floating masks must not contain `NaN` or `inf`
 - Empty mask returns `None`
-- The largest connected foreground component is selected and holes are filled
+- The largest 4-connected foreground component is selected and holes are filled
 - Surrounding zero padding does not change the measured shape
 - Downscaling is skipped if its output would have a one-pixel axis
 - Shape, center, and rectangle corner arguments use image order: `(height, width)` and `(y, x)`
@@ -166,6 +166,11 @@ clipping at the image bounds; `target_met` compares its roundness error with
 Visualization:
 
 - `pm.utils.plot_analysis_results(mask, results)`
+
+## Unreleased
+
+- Wadell roundness is several times faster: corner circle fits are vectorized and boundary discretization does less per-step work. Results are unchanged.
+- Component selection, hole filling, and the Crofton perimeter now use OpenCV and NumPy, so `scipy` and `scikit-image` are no longer dependencies. Results are unchanged.
 
 ## Changes in 0.1.8
 

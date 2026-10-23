@@ -4,8 +4,6 @@ import numpy as np
 
 Bbox: TypeAlias = list[list[float]]
 Mask: TypeAlias = Annotated[np.ndarray, "shape=(H, W), dtype=uint8"]
-Coordinates: TypeAlias = Annotated[np.ndarray, "shape=(N, 2), dtype=float64"]
-Boundary: TypeAlias = Annotated[np.ndarray, "shape=(N, 2), dtype=int32"]
 Points: TypeAlias = Annotated[np.ndarray, "shape=(N, 2), dtype=float32"]
 
 

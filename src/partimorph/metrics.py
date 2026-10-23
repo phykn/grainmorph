@@ -13,12 +13,34 @@ from .schema import (
     RoundnessResult,
     SphericityResult,
 )
+from .wadell import compute_roundness as compute_wadell_roundness
+
+# Four-direction Crofton weights indexed by 2x2 pixel pattern, matching
+# skimage.measure.perimeter_crofton(image, directions=4).
+_CROFTON_WEIGHTS = np.array(
+    [
+        0,
+        np.pi / 4 * (1 + 1 / np.sqrt(2)),
+        np.pi / (4 * np.sqrt(2)),
+        np.pi / (2 * np.sqrt(2)),
+        0,
+        np.pi / 4 * (1 + 1 / np.sqrt(2)),
+        0,
+        np.pi / (4 * np.sqrt(2)),
+        np.pi / 4,
+        np.pi / 2,
+        np.pi / (4 * np.sqrt(2)),
+        np.pi / (4 * np.sqrt(2)),
+        np.pi / 4,
+        np.pi / 2,
+        0,
+        0,
+    ]
+)
 
 
 def compute_roundness(mask: Mask, **params: float) -> RoundnessResult | None:
-    from .wadell import compute_roundness as compute_roundness_wadell
-
-    value = compute_roundness_wadell(mask, **params)
+    value = compute_wadell_roundness(mask, **params)
 
     if value is None:
         return None
@@ -29,14 +51,12 @@ def compute_roundness(mask: Mask, **params: float) -> RoundnessResult | None:
 
 
 def compute_circularity(mask: Mask, *, eps: float = 0.001) -> CircularityResult | None:
-    from skimage.measure import perimeter_crofton
-
     cropped_mask, _, _ = crop_mask(mask, pad=1)
 
     if cropped_mask.size == 0:
         return None
 
-    perimeter = perimeter_crofton(cropped_mask, 4)
+    perimeter = _crofton_perimeter(cropped_mask)
 
     if perimeter < eps:
         return None
@@ -46,6 +66,18 @@ def compute_circularity(mask: Mask, *, eps: float = 0.001) -> CircularityResult 
     value = float(np.clip(value, 0.0, 1.0))
 
     return {"val": value}
+
+
+def _crofton_perimeter(mask: Mask) -> float:
+    padded = np.pad((mask > 0).astype(np.uint8), ((2, 1), (2, 1)))
+    patterns = (
+        padded[1:, 1:]
+        + 2 * padded[:-1, 1:]
+        + 4 * padded[1:, :-1]
+        + 8 * padded[:-1, :-1]
+    )
+    counts = np.bincount(patterns.ravel(), minlength=16)
+    return float(_CROFTON_WEIGHTS @ counts)
 
 
 def compute_sphericity(mask: Mask, *, eps: float = 0.001) -> SphericityResult | None:
