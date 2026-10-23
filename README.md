@@ -38,7 +38,7 @@ python -m ruff format --isolated --check src tests
 Pushing a `vX.Y.Z` tag publishes that version to PyPI through
 `.github/workflows/publish.yml`, using PyPI trusted publishing (no API token):
 
-1. Set the same version in `pyproject.toml` and `src/grainmorph/__init__.py`, and add a `Changes in X.Y.Z` section below.
+1. Set the same version in `pyproject.toml` and `src/grainmorph/__init__.py`.
 2. Commit, then tag and push: `git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin main vX.Y.Z`.
 
 The workflow fails if the tag and the `pyproject.toml` version differ, then runs the tests before uploading.
@@ -178,22 +178,6 @@ clipping at the image bounds; `target_met` compares its roundness error with
 Visualization:
 
 - `pm.utils.plot_analysis_results(mask, results)`
-
-## Changes in 0.2.0
-
-- Renamed the package from `partimorph` to `grainmorph`: install with `pip install grainmorph` and import with `import grainmorph`. The API is otherwise unchanged from 0.1.9.
-
-## Changes in 0.1.9
-
-- Wadell roundness is several times faster: corner circle fits are vectorized and boundary discretization does less per-step work. Results are unchanged.
-- `create_particle_mask` calibrates roughness with 12 bisection steps by default instead of 20, about 1.5x faster. Generated masks can differ slightly; on a 108-case grid the roundness error changed by at most 0.012 and its mean was unchanged.
-- Component selection, hole filling, and the Crofton perimeter now use OpenCV and NumPy, so `scipy` and `scikit-image` are no longer dependencies. Results are unchanged.
-
-## Changes in 0.1.8
-
-- Corrected the fitted ellipse overlay orientation for rotated particles.
-- Unified inscribed-circle fitting used by sphericity and Wadell roundness.
-- Simplified ellipse fitting and bounding-box coordinate transforms while preserving the public API and analysis results.
 
 ## License
 
