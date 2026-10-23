@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from partimorph.wadell.smoothing import smooth_boundary
+from grainmorph.wadell.smoothing import smooth_boundary
 
 
 def _dense_smoothing(

@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-import partimorph as pm
-from partimorph.metrics import _crofton_perimeter
-from partimorph.wadell import compute_roundness
+import grainmorph as pm
+from grainmorph.metrics import _crofton_perimeter
+from grainmorph.wadell import compute_roundness
 
 
 @pytest.mark.parametrize(

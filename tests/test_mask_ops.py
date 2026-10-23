@@ -1,6 +1,6 @@
 import numpy as np
 
-from partimorph.mask_ops import prepare_mask
+from grainmorph.mask_ops import prepare_mask
 
 
 def test_prepare_mask_separates_diagonal_components():

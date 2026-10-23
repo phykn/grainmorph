@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from matplotlib.patches import Ellipse
 
-import partimorph as pm
+import grainmorph as pm
 
 
 @pytest.mark.parametrize("angle", [25, 60, -35])

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import partimorph as pm
+import grainmorph as pm
 
 
 def test_analyze_mask_full():

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from partimorph.wadell.discretize import max_line_deviation
+from grainmorph.wadell.discretize import max_line_deviation
 
 
 @pytest.mark.parametrize("angle", [0, 30, 90, 135])

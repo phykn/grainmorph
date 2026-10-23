@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 import pytest
 
-from partimorph.fitting import find_inscribed_circle
-from partimorph.mask_ops import crop_mask, prepare_mask
-from partimorph.utils.create_mask import (
+from grainmorph.fitting import find_inscribed_circle
+from grainmorph.mask_ops import crop_mask, prepare_mask
+from grainmorph.utils.create_mask import (
     create_circle_mask,
     create_ellipse_mask,
     create_pentagon_mask,
@@ -12,16 +12,16 @@ from partimorph.utils.create_mask import (
     create_star_mask,
     create_triangle_mask,
 )
-from partimorph.utils.parametric_mask import create_particle_mask
-from partimorph.wadell.boundary import extract_boundary
-from partimorph.wadell.corner import (
+from grainmorph.utils.parametric_mask import create_particle_mask
+from grainmorph.wadell.boundary import extract_boundary
+from grainmorph.wadell.corner import (
     _fit_circle,
     _fit_circles,
     _select_convex_points,
     compute_corner_radii,
 )
-from partimorph.wadell.discretize import discretize_boundary
-from partimorph.wadell.smoothing import smooth_boundary
+from grainmorph.wadell.discretize import discretize_boundary
+from grainmorph.wadell.smoothing import smooth_boundary
 
 
 def _loop_corner_radii(keypoints, r_max, r_max_pos, circle_fit_thresh):

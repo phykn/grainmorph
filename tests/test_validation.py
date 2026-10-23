@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from partimorph.validation import to_binary
+from grainmorph.validation import to_binary
 
 
 def test_to_binary_validation():

@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import pytest
 
-import partimorph as pm
-from partimorph.fitting import find_inscribed_circle, fit_ellipse
+import grainmorph as pm
+from grainmorph.fitting import find_inscribed_circle, fit_ellipse
 
 
 def test_aspect_ratio_payload_uses_fitted_ellipse():

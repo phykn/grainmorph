@@ -1,6 +1,6 @@
-# PartiMorph
+# GrainMorph
 
-PartiMorph analyzes a single 2D binary particle mask and returns geometric shape metrics.
+GrainMorph analyzes a single 2D binary particle mask and returns geometric shape metrics.
 
 | Metric | Meaning |
 |---|---|
@@ -13,10 +13,10 @@ Roundness, circularity, and sphericity are clipped to `0..1`. Aspect ratio is `>
 
 ## Installation
 
-PartiMorph requires Python `3.12+`.
+GrainMorph requires Python `3.12+`.
 
 ```bash
-pip install partimorph
+pip install grainmorph
 ```
 
 For local development:
@@ -36,7 +36,7 @@ python -m ruff format --isolated --check src tests
 ## Quick Start
 
 ```python
-import partimorph as pm
+import grainmorph as pm
 
 mask = pm.utils.create_circle_mask((256, 256), (128, 128), 60)
 results = pm.analyze_mask(mask)
@@ -166,6 +166,10 @@ clipping at the image bounds; `target_met` compares its roundness error with
 Visualization:
 
 - `pm.utils.plot_analysis_results(mask, results)`
+
+## Changes in 0.2.0
+
+- Renamed the package from `partimorph` to `grainmorph`: install with `pip install grainmorph` and import with `import grainmorph`. The API is otherwise unchanged from 0.1.9.
 
 ## Changes in 0.1.9
 

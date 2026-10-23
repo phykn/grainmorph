@@ -3,10 +3,10 @@ requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "partimorph"
-version = "0.1.9"
+name = "grainmorph"
+version = "0.2.0"
 authors = [
-    { name = "PartiMorph Contributors" }
+    { name = "GrainMorph Contributors" }
 ]
 description = "Particle shape analysis and visualization library."
 readme = "README.md"
@@ -35,4 +35,4 @@ Issues = "https://github.com/phykn/partimorph/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["partimorph*"]
+include = ["grainmorph*"]
