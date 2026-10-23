@@ -29,9 +29,9 @@ dev = [
 pythonpath = ["src"]
 
 [project.urls]
-Homepage = "https://github.com/phykn/partimorph"
-Repository = "https://github.com/phykn/partimorph"
-Issues = "https://github.com/phykn/partimorph/issues"
+Homepage = "https://github.com/phykn/grainmorph"
+Repository = "https://github.com/phykn/grainmorph"
+Issues = "https://github.com/phykn/grainmorph/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
