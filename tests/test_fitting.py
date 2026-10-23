@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pytest
 
-import grainmorph as pm
+import grainmorph as gm
 from grainmorph.fitting import find_inscribed_circle, fit_ellipse
 
 
@@ -15,7 +15,7 @@ def test_aspect_ratio_payload_uses_fitted_ellipse():
     points = np.concatenate(contours).astype(np.float32)
     (center_x, center_y), (width, height), angle = cv2.fitEllipse(points)
 
-    results = pm.analyze_mask(
+    results = gm.analyze_mask(
         mask,
         use_roundness=False,
         use_circularity=False,

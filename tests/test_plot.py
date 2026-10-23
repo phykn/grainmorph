@@ -8,18 +8,18 @@ import numpy as np
 import pytest
 from matplotlib.patches import Ellipse
 
-import grainmorph as pm
+import grainmorph as gm
 
 
 @pytest.mark.parametrize("angle", [25, 60, -35])
 def test_ellipse_overlay_aligns_with_rotated_particle(angle):
     mask = np.zeros((160, 180), dtype=np.uint8)
     cv2.ellipse(mask, (90, 80), (50, 18), angle, 0, 360, 1, -1)
-    results = pm.analyze_mask(
+    results = gm.analyze_mask(
         mask, use_roundness=False, use_circularity=False, use_sphericity=False
     )
 
-    pm.utils.plot_analysis_results(mask, results, show=False)
+    gm.utils.plot_analysis_results(mask, results, show=False)
     fig = plt.gcf()
     try:
         ax = fig.axes[0]

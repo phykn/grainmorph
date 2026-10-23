@@ -48,10 +48,10 @@ PyPI must list this repository as a trusted publisher for `grainmorph`
 ## Quick Start
 
 ```python
-import grainmorph as pm
+import grainmorph as gm
 
-mask = pm.utils.create_circle_mask((256, 256), (128, 128), 60)
-results = pm.analyze_mask(mask)
+mask = gm.utils.create_circle_mask((256, 256), (128, 128), 60)
+results = gm.analyze_mask(mask)
 
 if results is None:
     raise ValueError("mask has no foreground pixels")
@@ -65,13 +65,13 @@ print(results["aspect_ratio"]["val"])
 Visualize the results:
 
 ```python
-pm.utils.plot_analysis_results(mask, results)
+gm.utils.plot_analysis_results(mask, results)
 ```
 
 ## API
 
 ```python
-pm.analyze_mask(
+gm.analyze_mask(
     mask,
     use_aspect_ratio=True,
     use_roundness=True,
@@ -154,19 +154,19 @@ Returns `None` for an empty mask. Otherwise, returns an `AnalysisResult` dict. D
 
 Mask constructors:
 
-- `pm.utils.create_circle_mask(...)`
-- `pm.utils.create_ellipse_mask(...)`
-- `pm.utils.create_rectangle_mask(...)`
-- `pm.utils.create_square_mask(...)`
-- `pm.utils.create_triangle_mask(...)`
-- `pm.utils.create_pentagon_mask(...)`
-- `pm.utils.create_star_mask(...)`
-- `pm.utils.create_particle_mask(...)`
+- `gm.utils.create_circle_mask(...)`
+- `gm.utils.create_ellipse_mask(...)`
+- `gm.utils.create_rectangle_mask(...)`
+- `gm.utils.create_square_mask(...)`
+- `gm.utils.create_triangle_mask(...)`
+- `gm.utils.create_pentagon_mask(...)`
+- `gm.utils.create_star_mask(...)`
+- `gm.utils.create_particle_mask(...)`
 
 For example, a triangle in a non-square image uses `(x, y)` vertices:
 
 ```python
-mask = pm.utils.create_triangle_mask((20, 60), (30, 2), (40, 2), (30, 8))
+mask = gm.utils.create_triangle_mask((20, 60), (30, 2), (40, 2), (30, 8))
 ```
 
 `create_particle_mask` attempts to reach the requested roundness by calibrating
@@ -177,7 +177,7 @@ clipping at the image bounds; `target_met` compares its roundness error with
 
 Visualization:
 
-- `pm.utils.plot_analysis_results(mask, results)`
+- `gm.utils.plot_analysis_results(mask, results)`
 
 ## License
 

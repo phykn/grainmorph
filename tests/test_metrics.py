@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import grainmorph as pm
+import grainmorph as gm
 from grainmorph.metrics import _crofton_perimeter
 from grainmorph.wadell import compute_roundness
 
@@ -11,10 +11,10 @@ from grainmorph.wadell import compute_roundness
     [{}, {"max_dev_thresh": 0.5, "alpha_ratio": 0.025, "beta_ratio": 0.0005}],
 )
 def test_analysis_roundness_uses_wadell_options(params):
-    mask = pm.utils.create_circle_mask((100, 100), (50, 50), 30)
+    mask = gm.utils.create_circle_mask((100, 100), (50, 50), 30)
     expected = compute_roundness(mask, **params)
 
-    results = pm.analyze_mask(
+    results = gm.analyze_mask(
         mask,
         use_aspect_ratio=False,
         use_circularity=False,

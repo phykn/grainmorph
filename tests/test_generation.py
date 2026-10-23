@@ -3,13 +3,13 @@ import json
 import numpy as np
 import pytest
 
-import grainmorph as pm
+import grainmorph as gm
 
 
 def test_triangle_vertices_use_cartesian_order():
     vertices = ((30, 2), (40, 2), (30, 8))
 
-    mask = pm.utils.create_triangle_mask((20, 60), *vertices)
+    mask = gm.utils.create_triangle_mask((20, 60), *vertices)
 
     assert mask.dtype == bool
     assert all(mask[y, x] for x, y in vertices)
@@ -18,7 +18,7 @@ def test_triangle_vertices_use_cartesian_order():
 
 
 def test_create_particle_mask():
-    mask = pm.utils.create_particle_mask(
+    mask = gm.utils.create_particle_mask(
         shape=(256, 256),
         center=(128, 128),
         radius=50,
@@ -36,7 +36,7 @@ def test_create_particle_mask():
 
 
 def test_create_particle_mask_zero_radius():
-    mask, info = pm.utils.create_particle_mask(
+    mask, info = gm.utils.create_particle_mask(
         shape=(100, 100),
         center=(50, 50),
         radius=0.0,
@@ -50,7 +50,7 @@ def test_create_particle_mask_zero_radius():
 
 
 def test_roundness_rough_particle_golden():
-    mask = pm.utils.create_particle_mask(
+    mask = gm.utils.create_particle_mask(
         shape=(256, 256),
         center=(128, 128),
         radius=60,
@@ -59,7 +59,7 @@ def test_roundness_rough_particle_golden():
         seed=42,
     )
 
-    results = pm.analyze_mask(mask)
+    results = gm.analyze_mask(mask)
 
     assert results is not None
     assert results["roundness"] is not None
@@ -67,7 +67,7 @@ def test_roundness_rough_particle_golden():
 
 
 def test_particle_info_measures_returned_mask():
-    mask, info = pm.utils.create_particle_mask(
+    mask, info = gm.utils.create_particle_mask(
         shape=(96, 96),
         center=(0, 0),
         radius=25,
@@ -76,7 +76,7 @@ def test_particle_info_measures_returned_mask():
         seed=7,
         return_info=True,
     )
-    results = pm.analyze_mask(
+    results = gm.analyze_mask(
         mask,
         use_aspect_ratio=False,
         use_circularity=False,
@@ -92,13 +92,13 @@ def test_particle_info_measures_returned_mask():
 
 def test_mask_generators_reject_non_finite_radii():
     with pytest.raises(ValueError, match="finite"):
-        pm.utils.create_circle_mask((16, 16), (8, 8), np.nan)
+        gm.utils.create_circle_mask((16, 16), (8, 8), np.nan)
     with pytest.raises(ValueError, match="finite"):
-        pm.utils.create_ellipse_mask((16, 16), (8, 8), np.inf, 2)
+        gm.utils.create_ellipse_mask((16, 16), (8, 8), np.inf, 2)
     with pytest.raises(ValueError, match="finite"):
-        pm.utils.create_pentagon_mask((16, 16), (8, 8), np.nan)
+        gm.utils.create_pentagon_mask((16, 16), (8, 8), np.nan)
     with pytest.raises(ValueError, match="finite"):
-        pm.utils.create_star_mask((16, 16), (8, 8), 5, np.inf)
+        gm.utils.create_star_mask((16, 16), (8, 8), 5, np.inf)
 
 
 @pytest.mark.parametrize("field", ["sphericity", "roundness"])
@@ -107,7 +107,7 @@ def test_create_particle_mask_rejects_non_finite_targets(field):
     options[field] = np.nan
 
     with pytest.raises(ValueError, match="finite"):
-        pm.utils.create_particle_mask(
+        gm.utils.create_particle_mask(
             shape=(32, 32),
             center=(16, 16),
             radius=8,
@@ -126,8 +126,8 @@ def test_particle_report_preserves_seeded_mask(radius):
         "seed": 42,
     }
 
-    mask = pm.utils.create_particle_mask(**options)
-    reported, info = pm.utils.create_particle_mask(**options, return_info=True)
+    mask = gm.utils.create_particle_mask(**options)
+    reported, info = gm.utils.create_particle_mask(**options, return_info=True)
 
     np.testing.assert_array_equal(mask, reported)
     assert info["target_met"] == (info["abs_error"] <= info["report_tol"])

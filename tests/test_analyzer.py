@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-import grainmorph as pm
+import grainmorph as gm
 
 
 def test_analyze_mask_full():
     mask = np.zeros((100, 100), dtype=bool)
     mask[20:80, 20:80] = True
 
-    results = pm.analyze_mask(mask)
+    results = gm.analyze_mask(mask)
 
     assert results is not None
     assert set(results) == {
@@ -25,7 +25,7 @@ def test_metrics_consistency():
     y, x = np.ogrid[:100, :100]
     mask = (x - 50) ** 2 + (y - 50) ** 2 <= 40**2
 
-    results = pm.analyze_mask(mask)
+    results = gm.analyze_mask(mask)
 
     assert results is not None
     assert results["circularity"]["val"] > 0.9
@@ -38,7 +38,7 @@ def test_analyze_mask_rejects_invalid_eps(eps):
     mask = np.ones((8, 8), dtype=bool)
 
     with pytest.raises(ValueError, match="eps must be > 0"):
-        pm.analyze_mask(mask, eps=eps)
+        gm.analyze_mask(mask, eps=eps)
 
 
 @pytest.mark.parametrize("target_dim", [0, -1])
@@ -46,7 +46,7 @@ def test_analyze_mask_rejects_non_positive_target_dim(target_dim):
     mask = np.ones((8, 8), dtype=bool)
 
     with pytest.raises(ValueError, match="target_dim must be > 0"):
-        pm.analyze_mask(mask, target_dim=target_dim)
+        gm.analyze_mask(mask, target_dim=target_dim)
 
 
 @pytest.mark.parametrize("target_dim", [1.5, True])
@@ -54,7 +54,7 @@ def test_analyze_mask_rejects_non_integer_target_dim(target_dim):
     mask = np.ones((8, 8), dtype=bool)
 
     with pytest.raises(TypeError, match="target_dim must be an integer"):
-        pm.analyze_mask(mask, target_dim=target_dim)
+        gm.analyze_mask(mask, target_dim=target_dim)
 
 
 def test_analyze_mask_uses_largest_component():
@@ -62,7 +62,7 @@ def test_analyze_mask_uses_largest_component():
     mask[10:30, 10:30] = True
     mask[50:110, 50:110] = True
 
-    results = pm.analyze_mask(mask, use_roundness=False, use_circularity=False)
+    results = gm.analyze_mask(mask, use_roundness=False, use_circularity=False)
 
     assert results is not None
     assert results["sphericity"] is not None
@@ -75,7 +75,7 @@ def test_analyze_mask_resize_path_scales_coordinates():
     mask = np.zeros((1000, 1000), dtype=bool)
     mask[100:900, 200:800] = True
 
-    results = pm.analyze_mask(mask, target_dim=384, use_roundness=False)
+    results = gm.analyze_mask(mask, target_dim=384, use_roundness=False)
 
     assert results is not None
     assert results["sphericity"] is not None
@@ -94,7 +94,7 @@ def test_analyze_mask_resize_path_scales_coordinates():
 
 @pytest.mark.parametrize("shape", [(1, 1000), (1000, 1)])
 def test_analyze_mask_resizes_thin_masks_without_crashing(shape):
-    results = pm.analyze_mask(
+    results = gm.analyze_mask(
         np.ones(shape, dtype=bool),
         use_roundness=False,
     )
@@ -108,13 +108,13 @@ def test_analyze_mask_does_not_collapse_non_degenerate_axis():
     mask = np.zeros((1200, 1200), dtype=bool)
     mask[100:1100, 550:553] = True
 
-    resized = pm.analyze_mask(
+    resized = gm.analyze_mask(
         mask,
         use_roundness=False,
         use_circularity=False,
         use_sphericity=False,
     )
-    reference = pm.analyze_mask(
+    reference = gm.analyze_mask(
         mask,
         target_dim=2000,
         use_roundness=False,
@@ -133,12 +133,12 @@ def test_analyze_mask_does_not_collapse_non_degenerate_axis():
 
 
 def test_metrics_are_invariant_to_zero_padding():
-    small = pm.utils.create_circle_mask((100, 100), (50, 50), 2)
-    large = pm.utils.create_circle_mask((2000, 2000), (1000, 1000), 2)
+    small = gm.utils.create_circle_mask((100, 100), (50, 50), 2)
+    large = gm.utils.create_circle_mask((2000, 2000), (1000, 1000), 2)
     options = {"use_roundness": False, "use_aspect_ratio": False}
 
-    small_results = pm.analyze_mask(small, **options)
-    large_results = pm.analyze_mask(large, **options)
+    small_results = gm.analyze_mask(small, **options)
+    large_results = gm.analyze_mask(large, **options)
 
     assert small_results is not None
     assert large_results is not None
@@ -160,11 +160,11 @@ def test_metrics_are_invariant_to_zero_padding():
 
 @pytest.mark.parametrize("target_dim", [32, 384])
 def test_analysis_geometry_is_invariant_to_translation(target_dim):
-    mask = pm.utils.create_ellipse_mask((100, 120), (50, 60), 35, 20)
+    mask = gm.utils.create_ellipse_mask((100, 120), (50, 60), 35, 20)
     shifted = np.pad(mask, ((23, 0), (37, 0)))
 
-    reference = pm.analyze_mask(mask, target_dim=target_dim)
-    actual = pm.analyze_mask(shifted, target_dim=target_dim)
+    reference = gm.analyze_mask(mask, target_dim=target_dim)
+    actual = gm.analyze_mask(shifted, target_dim=target_dim)
 
     for key in reference:
         assert actual[key] is not None
@@ -193,11 +193,11 @@ def test_analysis_geometry_is_invariant_to_translation(target_dim):
     [(), ("aspect_ratio",), ("roundness",), ("circularity",), ("sphericity",)],
 )
 def test_analysis_metric_selection(enabled):
-    mask = pm.utils.create_circle_mask((80, 80), (40, 40), 20)
+    mask = gm.utils.create_circle_mask((80, 80), (40, 40), 20)
     keys = ("aspect_ratio", "roundness", "circularity", "sphericity")
     options = {f"use_{key}": key in enabled for key in keys}
 
-    results = pm.analyze_mask(mask, **options)
+    results = gm.analyze_mask(mask, **options)
 
     assert set(results) == set(enabled)
     assert all(result is not None for result in results.values())
