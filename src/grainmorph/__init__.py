@@ -1,5 +1,7 @@
+from importlib.metadata import version
+
 from . import utils
 from .analyzer import analyze_mask
 
-__version__ = "0.2.1"
+__version__ = version("grainmorph")
 __all__ = ["analyze_mask", "utils"]

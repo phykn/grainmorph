@@ -4,7 +4,7 @@ import pytest
 from grainmorph.wadell.discretize import discretize_boundary, find_max_deviation
 
 
-def test_discretize_keeps_one_keypoint_per_square_corner():
+def test_discretize_keeps_exactly_the_corners_of_a_square():
     side = np.arange(10.0)
     zeros = np.zeros(10)
     boundary = np.concatenate(
@@ -18,9 +18,7 @@ def test_discretize_keeps_one_keypoint_per_square_corner():
 
     keypoints = discretize_boundary(boundary, 0.3)
 
-    corners = [[0, 0], [10, 0], [10, 10], [0, 10]]
-    assert len(keypoints) == 4
-    assert np.all(np.linalg.norm(keypoints - corners, axis=1) <= 1.0)
+    assert keypoints.tolist() == [[0, 0], [10, 0], [10, 10], [0, 10]]
 
 
 @pytest.mark.parametrize("angle", [0, 30, 90, 135])

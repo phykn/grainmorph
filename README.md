@@ -132,7 +132,7 @@ python -m ruff format --isolated --check src tests
 ```
 
 Pushing a `vX.Y.Z` tag publishes to PyPI. The tag must match the version in
-`pyproject.toml` and `src/grainmorph/__init__.py`.
+`pyproject.toml`.
 
 ## License
 

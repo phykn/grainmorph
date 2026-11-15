@@ -10,25 +10,20 @@ def discretize_boundary(boundary, max_dev_thresh):
 
     start, end = 0, num
     while start < num:
-        dev, idx = find_max_deviation(closed[start:end])
-        while dev > max_dev_thresh:
-            if idx == 0:
-                end = start + 2
-                break
+        dev, idx = find_max_deviation(closed[start : end + 1])
+        # A peak at either end would not shrink the segment.
+        while dev > max_dev_thresh and 0 < idx < end - start:
             end = start + idx
-            dev, idx = find_max_deviation(closed[start:end])
+            dev, idx = find_max_deviation(closed[start : end + 1])
 
-        if end <= num or start == 0:
-            keypoints.append(closed[end - 1])
-        start, end = end, num + 1
+        if end < num:
+            keypoints.append(closed[end])
+        start, end = end, num
 
     return np.array(keypoints)
 
 
 def find_max_deviation(points):
-    if len(points) <= 1:
-        return 0.0, 0
-
     x, y = points.T
     x0, y0 = points[0].tolist()
     x1, y1 = points[-1].tolist()
