@@ -1,49 +1,55 @@
+from numbers import Integral
+
 import numpy as np
 
-from .mask_ops import prepare_mask
+from .mask import prepare_mask, restore_coordinates
 from .metrics import (
     compute_aspect_ratio,
     compute_circularity,
     compute_roundness,
     compute_sphericity,
 )
-from .schema import AnalysisResult
-from .validation import to_binary, validate_analysis_params
 
 
 def analyze_mask(
-    mask: np.ndarray,
+    mask,
     *,
-    use_aspect_ratio: bool = True,
-    use_roundness: bool = True,
-    use_circularity: bool = True,
-    use_sphericity: bool = True,
-    roundness_params: dict[str, float] | None = None,
-    eps: float = 0.001,
-    target_dim: int = 384,
-) -> AnalysisResult | None:
-    eps, target_dim = validate_analysis_params(eps, target_dim)
+    use_aspect_ratio=True,
+    use_roundness=True,
+    use_circularity=True,
+    use_sphericity=True,
+    roundness_params=None,
+    eps=0.001,
+    target_dim=384,
+):
+    if not (np.isfinite(eps) and eps > 0):
+        raise ValueError("eps must be > 0 and finite.")
+    if isinstance(target_dim, bool) or not isinstance(target_dim, Integral):
+        raise TypeError("target_dim must be an integer.")
+    if target_dim <= 0:
+        raise ValueError("target_dim must be > 0.")
+    if not isinstance(mask, np.ndarray):
+        raise TypeError("mask must be a numpy.ndarray.")
+    if mask.ndim != 2:
+        raise ValueError(f"mask must be 2D, got {mask.ndim}D.")
+    if mask.dtype.kind not in "biuf" or not ((mask == 0) | (mask == 1)).all():
+        raise ValueError("mask must be binary with values in {0, 1}.")
 
-    mask_binary = to_binary(mask)
-    if not np.any(mask_binary):
+    mask = mask.astype(np.uint8)
+    if not mask.any():
         return None
 
-    if not (use_aspect_ratio or use_roundness or use_circularity or use_sphericity):
-        return {}
+    mask, scale, offset_x, offset_y = prepare_mask(mask, target_dim)
 
-    prepared = prepare_mask(mask_binary, target_dim=target_dim)
-    final_mask = prepared.mask
-
-    results: AnalysisResult = {}
+    results = {}
     if use_aspect_ratio:
-        results["aspect_ratio"] = compute_aspect_ratio(final_mask, eps=eps)
+        results["aspect_ratio"] = compute_aspect_ratio(mask, eps)
     if use_roundness:
-        results["roundness"] = compute_roundness(final_mask, **(roundness_params or {}))
+        results["roundness"] = compute_roundness(mask, **(roundness_params or {}))
     if use_circularity:
-        results["circularity"] = compute_circularity(final_mask, eps=eps)
+        results["circularity"] = compute_circularity(mask, eps)
     if use_sphericity:
-        results["sphericity"] = compute_sphericity(final_mask, eps=eps)
+        results["sphericity"] = compute_sphericity(mask, eps)
 
-    prepared.restore_results(results)
-
+    restore_coordinates(results, scale, offset_x, offset_y)
     return results

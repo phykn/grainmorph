@@ -1,112 +1,133 @@
+import cv2
 import numpy as np
 
-from .fitting import (
-    find_enclosing_circle,
-    find_inscribed_circle,
-    fit_ellipse,
-)
-from .mask_ops import crop_mask
-from .schema import (
-    AspectRatioResult,
-    CircularityResult,
-    Mask,
-    RoundnessResult,
-    SphericityResult,
-)
-from .wadell import compute_roundness as compute_wadell_roundness
-
-# Four-direction Crofton weights indexed by 2x2 pixel pattern, matching
-# skimage.measure.perimeter_crofton(image, directions=4).
-_CROFTON_WEIGHTS = np.array(
-    [
-        0,
-        np.pi / 4 * (1 + 1 / np.sqrt(2)),
-        np.pi / (4 * np.sqrt(2)),
-        np.pi / (2 * np.sqrt(2)),
-        0,
-        np.pi / 4 * (1 + 1 / np.sqrt(2)),
-        0,
-        np.pi / (4 * np.sqrt(2)),
-        np.pi / 4,
-        np.pi / 2,
-        np.pi / (4 * np.sqrt(2)),
-        np.pi / (4 * np.sqrt(2)),
-        np.pi / 4,
-        np.pi / 2,
-        0,
-        0,
-    ]
-)
+from .wadell.corner import compute_corner_radii
+from .wadell.discretize import discretize_boundary
+from .wadell.smoothing import smooth_boundary
 
 
-def compute_roundness(mask: Mask, **params: float) -> RoundnessResult | None:
-    value = compute_wadell_roundness(mask, **params)
+def compute_aspect_ratio(mask, eps):
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    points = contours[0].reshape(-1, 2).astype(np.float32)
 
-    if value is None:
+    if len(points) < 5:
+        rect = cv2.minAreaRect(points)
+        (x, y), (w, h), angle = rect
+        bbox = cv2.boxPoints(rect).tolist()
+    else:
+        (x, y), (w, h), angle = cv2.fitEllipse(points)
+        theta = np.deg2rad(angle)
+        axes = np.array(
+            [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
+        )
+        projected = points @ axes
+        x_min, y_min = projected.min(axis=0)
+        x_max, y_max = projected.max(axis=0)
+        corners = [[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max]]
+        bbox = (np.array(corners) @ axes.T).tolist()
+
+    if min(w, h) < eps:
         return None
 
-    value = float(np.clip(value, 0.0, 1.0))
+    return {
+        "val": max(w, h) / min(w, h),
+        "ellipse": {
+            "major": max(w, h),
+            "minor": min(w, h),
+            "x": x,
+            "y": y,
+            "angle": angle,
+            "w": w,
+            "h": h,
+            "bbox": bbox,
+        },
+    }
 
-    return {"val": value}
 
-
-def compute_circularity(mask: Mask, *, eps: float = 0.001) -> CircularityResult | None:
-    cropped_mask, _, _ = crop_mask(mask, pad=1)
-
-    if cropped_mask.size == 0:
+def compute_roundness(
+    mask,
+    max_dev_thresh=0.3,
+    circle_fit_thresh=0.98,
+    alpha_ratio=0.05,
+    beta_ratio=0.001,
+):
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    boundary = contours[0].reshape(-1, 2).astype(np.float64)
+    if len(boundary) < 3:
         return None
 
-    perimeter = _crofton_perimeter(cropped_mask)
-
-    if perimeter < eps:
+    smoothed = smooth_boundary(boundary, alpha_ratio, beta_ratio)
+    keypoints = discretize_boundary(smoothed, max_dev_thresh)
+    if len(keypoints) < 3:
         return None
 
-    area = float(np.count_nonzero(mask))
-    value = 4.0 * np.pi * area / perimeter**2
-    value = float(np.clip(value, 0.0, 1.0))
+    inscribed = find_inscribed_circle(mask)
+    radii = compute_corner_radii(
+        keypoints,
+        inscribed["r"],
+        np.array([inscribed["x"], inscribed["y"]]),
+        circle_fit_thresh,
+    )
+    if len(radii) == 0:
+        return None
 
-    return {"val": value}
+    return {"val": float(np.clip(np.mean(radii) / inscribed["r"], 0.0, 1.0))}
 
 
-def _crofton_perimeter(mask: Mask) -> float:
-    padded = np.pad((mask > 0).astype(np.uint8), ((2, 1), (2, 1)))
+def compute_circularity(mask, eps):
+    # Four-direction Crofton weights indexed by 2x2 pixel pattern, matching
+    # skimage.measure.perimeter_crofton(image, directions=4).
+    weights = np.array(
+        [
+            0,
+            np.pi / 4 * (1 + 1 / np.sqrt(2)),
+            np.pi / (4 * np.sqrt(2)),
+            np.pi / (2 * np.sqrt(2)),
+            0,
+            np.pi / 4 * (1 + 1 / np.sqrt(2)),
+            0,
+            np.pi / (4 * np.sqrt(2)),
+            np.pi / 4,
+            np.pi / 2,
+            np.pi / (4 * np.sqrt(2)),
+            np.pi / (4 * np.sqrt(2)),
+            np.pi / 4,
+            np.pi / 2,
+            0,
+            0,
+        ]
+    )
+    padded = np.pad(mask, 1)
     patterns = (
         padded[1:, 1:]
         + 2 * padded[:-1, 1:]
         + 4 * padded[1:, :-1]
         + 8 * padded[:-1, :-1]
     )
-    counts = np.bincount(patterns.ravel(), minlength=16)
-    return float(_CROFTON_WEIGHTS @ counts)
+    perimeter = float(weights @ np.bincount(patterns.ravel(), minlength=16))
+    if perimeter < eps:
+        return None
+
+    area = np.count_nonzero(mask)
+    return {"val": float(np.clip(4.0 * np.pi * area / perimeter**2, 0.0, 1.0))}
 
 
-def compute_sphericity(mask: Mask, *, eps: float = 0.001) -> SphericityResult | None:
+def compute_sphericity(mask, eps):
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    (x, y), r = cv2.minEnclosingCircle(cv2.convexHull(contours[0]))
+    if r < eps:
+        return None
+
     inscribed = find_inscribed_circle(mask)
-    enclosing = find_enclosing_circle(mask)
-
-    if inscribed is None or enclosing is None:
-        return None
-
-    inscribed_radius = inscribed["r"]
-    enclosing_radius = enclosing["r"]
-
-    if enclosing_radius < eps:
-        return None
-
-    value = float(np.clip(inscribed_radius / enclosing_radius, 0.0, 1.0))
-
-    return {"val": value, "inscribed": inscribed, "enclosing": enclosing}
+    return {
+        "val": float(np.clip(inscribed["r"] / r, 0.0, 1.0)),
+        "inscribed": inscribed,
+        "enclosing": {"x": x, "y": y, "r": r},
+    }
 
 
-def compute_aspect_ratio(mask: Mask, *, eps: float = 0.001) -> AspectRatioResult | None:
-    ellipse_data = fit_ellipse(mask)
-
-    if ellipse_data is None:
-        return None
-
-    if ellipse_data["minor"] < eps:
-        return None
-
-    value = ellipse_data["major"] / ellipse_data["minor"]
-
-    return {"val": value, "ellipse": ellipse_data}
+def find_inscribed_circle(mask):
+    # Padding makes the image border count as background.
+    dist = cv2.distanceTransform(np.pad(mask, 1), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+    y, x = np.unravel_index(np.argmax(dist), dist.shape)
+    return {"x": float(x - 1), "y": float(y - 1), "r": float(dist[y, x])}
