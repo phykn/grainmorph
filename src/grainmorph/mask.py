@@ -21,13 +21,16 @@ def prepare_mask(mask, target_dim):
     width, height = round(w * ratio), round(h * ratio)
     if ratio < 1 and min(width, height) > 1:
         shift = (ratio - 1.0) / 2.0
-        mask = cv2.warpAffine(
+        small = cv2.warpAffine(
             mask,
             np.array([[ratio, 0.0, shift], [0.0, ratio, shift]]),
             (width, height),
             flags=cv2.INTER_NEAREST,
         )
-        scale = 1.0 / ratio
+        # Downscaling can erase or split thin parts; such a mask keeps its size.
+        if cv2.connectedComponents(small, connectivity=4)[0] == 2:
+            mask = small
+            scale = 1.0 / ratio
 
     # OpenCV maps pixel centers, so the half-pixel term is part of the inverse map.
     offset_x = x0 + x1 + (scale - 1.0) / 2.0

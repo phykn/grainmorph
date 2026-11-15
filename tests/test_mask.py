@@ -45,3 +45,14 @@ def test_prepare_mask_downscales_to_target_dim():
 
     np.testing.assert_array_equal(prepared, np.ones((100, 50), dtype=np.uint8))
     assert (scale, offset_x, offset_y) == (4.0, 101.5, 51.5)
+
+
+def test_prepare_mask_keeps_size_when_downscaling_would_split_it():
+    mask = np.zeros((100, 100), dtype=np.uint8)
+    mask[50, :] = 1
+    mask[:, 30] = 1
+
+    prepared, scale, offset_x, offset_y = prepare_mask(mask, 8)
+
+    np.testing.assert_array_equal(prepared, mask)
+    assert (scale, offset_x, offset_y) == (1.0, 0.0, 0.0)

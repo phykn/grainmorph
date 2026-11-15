@@ -77,7 +77,7 @@ results = gm.analyze_mask(
 - `use_aspect_ratio`, `use_roundness`, `use_circularity`, `use_sphericity`: a metric set to `False` is left out of the result.
 - `roundness_params`: overrides `max_dev_thresh` (0.3, boundary discretization), `circle_fit_thresh` (0.98, corner circle fitting), `alpha_ratio` (0.05) and `beta_ratio` (0.001, boundary smoothing).
 - `eps`: a metric whose denominator is below this is `None`.
-- `target_dim`: a particle larger than this is downscaled for speed, and coordinates are restored to the input scale.
+- `target_dim`: a particle larger than this is downscaled for speed, unless that would split or erase thin parts. Coordinates stay in input pixels.
 
 ## Plot the result
 
