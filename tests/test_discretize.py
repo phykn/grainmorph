@@ -28,13 +28,16 @@ def test_max_deviation_is_invariant_to_rigid_transforms(angle, offset):
     theta = np.deg2rad(angle)
     axes = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
-    deviation, idx = find_max_deviation(points @ axes.T + offset)
+    x, y = (points @ axes.T + offset).T
+
+    deviation, idx = find_max_deviation(x, y, x[0], y[0], x[-1], y[-1])
 
     assert deviation == pytest.approx(2.0)
     assert idx == 1
 
 
 def test_max_deviation_with_coincident_endpoints():
-    points = np.array([[1.0, 2.0], [4.0, 6.0], [1.0, 2.0]])
+    x = np.array([1.0, 4.0, 1.0])
+    y = np.array([2.0, 6.0, 2.0])
 
-    assert find_max_deviation(points) == (5.0, 1)
+    assert find_max_deviation(x, y, 1.0, 2.0, 1.0, 2.0) == (5.0, 1)
